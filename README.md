@@ -1,6 +1,10 @@
-# spa-starter
+# Galtarus (offline hub)
 
-Petit starter **Single Page App** (sans framework, sans build) pour itérer vite à partir de prompts.
+Mini **Single Page App** (sans framework, sans build) orientée "product" : un hub offline avec des *sections* (Idea Vault, Checklists, Notes) stockées en localStorage.
+
+- 100% statique
+- CSP strict : **connect-src 'none'** (pas de réseau)
+- Export/Import JSON pour backup/sync manuel
 
 ## Démarrer
 - Ouvre `index.html` dans ton navigateur (double-clic) ou lance un petit serveur local.
@@ -17,11 +21,13 @@ python -m http.server 5173
 Puis ouvre http://localhost:5173
 
 ## Structure
-- `index.html` : point d’entrée
-- `src/main.js` : boot + router
-- `src/router.js` : mini routeur hash (`#/`, `#/about`, ...)
-- `src/pages/*` : pages (fonctions qui retournent du HTML)
-- `src/components/*` : petits composants
+- `index.html` : point d’entrée (+ CSP)
+- `src/main.js` : boot + render loop (préservation focus/scroll)
+- `src/router.js` : mini routeur hash (`#/`, `#/sections`, `#/s/:id`, `#/search`)
+- `src/pages/*` : pages
+- `src/sections/*` : types de section (Idea Vault / Checklist / Notes)
+- `src/stores/*` : stores localStorage (offline)
+- `src/components/*` : composants
 - `src/styles/*` : CSS
 
 ## Déploiement (simple)

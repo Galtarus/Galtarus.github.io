@@ -21,6 +21,18 @@ export function iconSvg(name) {
   if (name === 'search') {
     return `<svg ${common} aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>`;
   }
+  if (name === 'x') {
+    return `<svg ${common} aria-hidden="true"><path d="M18 6 6 18" /><path d="M6 6l12 12" /></svg>`;
+  }
+  if (name === 'check') {
+    return `<svg ${common} aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>`;
+  }
+  if (name === 'clipboard') {
+    return `<svg ${common} aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M9 4h6v3H9z" /></svg>`;
+  }
+  if (name === 'download') {
+    return `<svg ${common} aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>`;
+  }
   if (name === 'grid') {
     return `<svg ${common} aria-hidden="true"><path d="M4 4h7v7H4z" /><path d="M13 4h7v7h-7z" /><path d="M4 13h7v7H4z" /><path d="M13 13h7v7h-7z" /></svg>`;
   }

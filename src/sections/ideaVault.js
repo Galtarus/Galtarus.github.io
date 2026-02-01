@@ -1,4 +1,5 @@
 import { escapeHtml } from '../lib/dom.js';
+import { copyText } from '../lib/clipboard.js';
 import { uid } from '../lib/id.js';
 import { confirmDialog, editSectionDialog } from '../lib/dialogs.js';
 import { iconSvg } from '../components/icons.js';
@@ -111,7 +112,11 @@ export function IdeaVaultPage(state) {
 
     <div class="panel">
       <div class="toolbar">
-        <input id="${searchId}" class="field" placeholder="Search" value="${escapeHtml(view.query)}" />
+        <div class="fieldWrap">
+          <span class="fieldHintIcon">${iconSvg('search')}</span>
+          <input id="${searchId}" class="field" placeholder="Search" value="${escapeHtml(view.query)}" />
+          <button class="iconBtn clearBtn" type="button" data-action="ideas:clearSearch" title="Clear search" aria-label="Clear search" ${view.query ? '' : 'style="display:none"'}>${iconSvg('x')}</button>
+        </div>
         <select id="${sortId}" class="field select" aria-label="Sort">
           <option value="newest" ${view.sort === 'newest' ? 'selected' : ''}>Newest</option>
           <option value="oldest" ${view.sort === 'oldest' ? 'selected' : ''}>Oldest</option>
@@ -143,7 +148,10 @@ export function IdeaVaultPage(state) {
             <div class="itemTitle">${escapeHtml(it.title || 'Untitled')}</div>
             ${it.note ? `<div class="itemNote">${escapeHtml(it.note)}</div>` : ''}
           </div>
-          <button class="iconBtn" type="button" data-del="${escapeHtml(it.id)}" title="Delete" aria-label="Delete">${iconSvg('trash')}</button>
+          <div class="toolbar" style="justify-content:flex-end">
+            <button class="iconBtn" type="button" data-copy="${escapeHtml(it.id)}" title="Copy" aria-label="Copy">${iconSvg('clipboard')}</button>
+            <button class="iconBtn" type="button" data-del="${escapeHtml(it.id)}" title="Delete" aria-label="Delete">${iconSvg('trash')}</button>
+          </div>
         </li>
       `
         )
@@ -176,6 +184,22 @@ export function bindIdeaVaultHandlers({ root, state, onState }) {
   };
 
   search?.addEventListener('input', (e) => setView({ query: e.target.value }));
+  search?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      setView({ query: '' });
+      if (search) search.value = '';
+      search.blur();
+    }
+  });
+
+  root.querySelector('[data-action="ideas:clearSearch"]')?.addEventListener('click', () => {
+    setView({ query: '' });
+    if (search) {
+      search.value = '';
+      search.focus({ preventScroll: true });
+    }
+  });
+
   sort?.addEventListener('change', (e) => setView({ sort: e.target.value }));
 
   const persist = (nextItems) => {
@@ -249,6 +273,26 @@ export function bindIdeaVaultHandlers({ root, state, onState }) {
 
   root.querySelector('[data-action="idea:seed"]')?.addEventListener('click', () => {
     persist(SEED);
+  });
+
+  root.querySelectorAll('[data-copy]')?.forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-copy');
+      const current = getItems(state, sid).find((it) => it.id === id);
+      if (!current) return;
+
+      const text = [String(current.title || 'Untitled').trim(), String(current.note || '').trim()].filter(Boolean).join('\n\n');
+      const ok = await copyText(text);
+      if (!ok) return;
+
+      btn.classList.add('isCopied');
+      const prevTitle = btn.getAttribute('title');
+      btn.setAttribute('title', 'Copied');
+      setTimeout(() => {
+        btn.classList.remove('isCopied');
+        if (prevTitle) btn.setAttribute('title', prevTitle);
+      }, 900);
+    });
   });
 
   root.querySelectorAll('[data-del]')?.forEach((btn) => {

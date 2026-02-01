@@ -90,7 +90,11 @@ export function ChecklistPage(state) {
 
     <div class="panel">
       <div class="toolbar">
-        <input id="${searchId}" class="field" placeholder="Search" value="${escapeHtml(view.query)}" />
+        <div class="fieldWrap">
+          <span class="fieldHintIcon">${iconSvg('search')}</span>
+          <input id="${searchId}" class="field" placeholder="Search" value="${escapeHtml(view.query)}" />
+          <button class="iconBtn clearBtn" type="button" data-action="ck:clearSearch" title="Clear search" aria-label="Clear search" ${view.query ? '' : 'style="display:none"'}>${iconSvg('x')}</button>
+        </div>
         <select id="${sortId}" class="field select" aria-label="Sort">
           <option value="todoFirst" ${view.sort === 'todoFirst' ? 'selected' : ''}>Todo first</option>
           <option value="created" ${view.sort === 'created' ? 'selected' : ''}>Newest</option>
@@ -103,6 +107,8 @@ export function ChecklistPage(state) {
       <div class="toolbar">
         <input id="${newId}" class="field" placeholder="New item" autocomplete="off" />
         <button class="btn" data-action="ck:add" type="button">${iconSvg('plus')} Add</button>
+        <button class="iconBtn" type="button" data-action="ck:toggleAll" title="Toggle all" aria-label="Toggle all">${iconSvg('check')}</button>
+        <button class="iconBtn" type="button" data-action="ck:clearDone" title="Clear done" aria-label="Clear done">${iconSvg('trash')}</button>
       </div>
     </div>
 
@@ -146,6 +152,22 @@ export function bindChecklistHandlers({ root, state, onState }) {
   };
 
   search?.addEventListener('input', (e) => setView({ query: e.target.value }));
+  search?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      setView({ query: '' });
+      if (search) search.value = '';
+      search.blur();
+    }
+  });
+
+  root.querySelector('[data-action="ck:clearSearch"]')?.addEventListener('click', () => {
+    setView({ query: '' });
+    if (search) {
+      search.value = '';
+      search.focus({ preventScroll: true });
+    }
+  });
+
   sort?.addEventListener('change', (e) => setView({ sort: e.target.value }));
 
   const persist = (nextItems) => {
@@ -157,6 +179,30 @@ export function bindChecklistHandlers({ root, state, onState }) {
       __data: { ...(state.__data ?? {}), [sid]: { items: nextItems } },
     });
   };
+
+  root.querySelector('[data-action="ck:toggleAll"]')?.addEventListener('click', () => {
+    const items = getItems(state, sid);
+    if (items.length === 0) return;
+    const allDone = items.every((it) => it.done);
+    persist(items.map((it) => ({ ...it, done: !allDone })));
+  });
+
+  root.querySelector('[data-action="ck:clearDone"]')?.addEventListener('click', async () => {
+    const items = getItems(state, sid);
+    const done = items.filter((it) => it.done);
+    if (done.length === 0) return;
+
+    const ok = await confirmDialog({
+      title: `Clear ${done.length} done item${done.length === 1 ? '' : 's'}?`,
+      message: 'This cannot be undone.',
+      confirmText: 'Clear done',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
+    persist(items.filter((it) => !it.done));
+  });
 
   root.querySelector('[data-action="section:edit"]')?.addEventListener('click', async () => {
     const res = await editSectionDialog({

@@ -1,4 +1,5 @@
 import { escapeHtml } from '../lib/dom.js';
+import { copyText } from '../lib/clipboard.js';
 import { confirmDialog, editSectionDialog } from '../lib/dialogs.js';
 import { iconSvg } from '../components/icons.js';
 import { loadSectionData, saveSectionData, deleteSectionData } from '../stores/sectionDataStore.js';
@@ -59,7 +60,13 @@ export function NotesPage(state) {
 
     <div class="panel">
       <div class="toolbar">
-        <input id="${searchId}" class="field" placeholder="Search in note" value="${escapeHtml(view.query)}" />
+        <div class="fieldWrap">
+          <span class="fieldHintIcon">${iconSvg('search')}</span>
+          <input id="${searchId}" class="field" placeholder="Search in note" value="${escapeHtml(view.query)}" />
+          <button class="iconBtn clearBtn" type="button" data-action="notes:clearSearch" title="Clear search" aria-label="Clear search" ${view.query ? '' : 'style="display:none"'}>${iconSvg('x')}</button>
+        </div>
+        <button class="iconBtn" type="button" data-action="notes:copy" title="Copy note" aria-label="Copy note">${iconSvg('clipboard')}</button>
+        <button class="iconBtn" type="button" data-action="notes:download" title="Download as .txt" aria-label="Download as .txt">${iconSvg('download')}</button>
         <span class="badge">${matches === null ? '—' : matches ? 'match' : 'no match'}</span>
       </div>
       <div class="divider"></div>
@@ -86,6 +93,52 @@ export function bindNotesHandlers({ root, state, onState }) {
   };
 
   search?.addEventListener('input', (e) => setView({ query: e.target.value }));
+  search?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      setView({ query: '' });
+      if (search) search.value = '';
+      search.blur();
+    }
+  });
+
+  root.querySelector('[data-action="notes:clearSearch"]')?.addEventListener('click', () => {
+    setView({ query: '' });
+    if (search) {
+      search.value = '';
+      search.focus({ preventScroll: true });
+    }
+  });
+
+  root.querySelector('[data-action="notes:copy"]')?.addEventListener('click', async (e) => {
+    const text = getText(state, sid);
+    const ok = await copyText(text);
+    if (!ok) return;
+
+    const btn = e.currentTarget;
+    btn.classList.add('isCopied');
+    const prev = btn.getAttribute('title');
+    btn.setAttribute('title', 'Copied');
+    setTimeout(() => {
+      btn.classList.remove('isCopied');
+      if (prev) btn.setAttribute('title', prev);
+    }, 900);
+  });
+
+  root.querySelector('[data-action="notes:download"]')?.addEventListener('click', () => {
+    const text = getText(state, sid);
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    const name = String(section.title || 'notes').trim().replaceAll(/[\\/:*?"<>|]+/g, '-');
+    a.download = `${name || 'notes'}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 500);
+  });
 
   root.querySelector('[data-action="section:edit"]')?.addEventListener('click', async () => {
     const res = await editSectionDialog({

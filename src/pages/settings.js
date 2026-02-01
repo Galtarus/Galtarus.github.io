@@ -19,7 +19,10 @@ export function SettingsPage(state) {
         <h1 class="h1" style="margin:0 0 6px">Settings</h1>
         <div class="small">Offline-first. Your data stays in this browser unless you export it.</div>
       </div>
-      <a class="btn btnGhost" href="#/sections">${iconSvg('grid')} Sections</a>
+      <div class="toolbar" style="justify-content:flex-end">
+        <a class="btn btnGhost" href="#/sections">${iconSvg('grid')} Sections</a>
+        <a class="btn btnGhost" href="#/">${iconSvg('home')} Hub</a>
+      </div>
     </div>
 
     <div class="panel">

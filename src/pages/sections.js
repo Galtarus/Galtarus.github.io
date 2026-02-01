@@ -9,7 +9,7 @@ import {
   updateSectionMeta,
   SECTION_KINDS,
 } from '../stores/sectionsStore.js';
-import { deleteSectionData } from '../stores/sectionDataStore.js';
+import { loadSectionData, deleteSectionData } from '../stores/sectionDataStore.js';
 
 export function initSectionsState(state) {
   return {
@@ -32,7 +32,7 @@ function sortSections(items, sort) {
 function kindLabel(kind) {
   if (kind === SECTION_KINDS.CHECKLIST) return 'Checklist';
   if (kind === SECTION_KINDS.NOTES) return 'Notes';
-  return 'Idea Vault';
+  return 'Ideas';
 }
 
 function formatTime(ts) {
@@ -81,7 +81,7 @@ export function SectionsPage(state) {
       <div class="toolbar">
         <input id="secTitle" class="field" placeholder="Title (required)" autocomplete="off" />
         <select id="secKind" class="field select" aria-label="Type">
-          <option value="${SECTION_KINDS.IDEA_VAULT}">Idea Vault</option>
+          <option value="${SECTION_KINDS.IDEA_VAULT}">Ideas</option>
           <option value="${SECTION_KINDS.CHECKLIST}">Checklist</option>
           <option value="${SECTION_KINDS.NOTES}">Notes</option>
         </select>
@@ -120,7 +120,13 @@ export function SectionsPage(state) {
     ${sections.length === 0 ? `
       <div class="empty">
         <div class="emptyTitle">No sections yet</div>
-        <div class="small">Create your first section above. A <b>Notes</b> section is great for quick capture.</div>
+        <div class="small">Start with a ready-made section, or create a custom one above.</div>
+        <div class="divider"></div>
+        <div class="row">
+          <button class="btn" type="button" data-empty-create="${SECTION_KINDS.NOTES}">${kindIconSvg(SECTION_KINDS.NOTES)} New Notes</button>
+          <button class="btn" type="button" data-empty-create="${SECTION_KINDS.CHECKLIST}">${kindIconSvg(SECTION_KINDS.CHECKLIST)} New Checklist</button>
+          <button class="btn" type="button" data-empty-create="${SECTION_KINDS.IDEA_VAULT}">${kindIconSvg(SECTION_KINDS.IDEA_VAULT)} New Ideas</button>
+        </div>
       </div>
       <div class="divider"></div>
     ` : ''}
@@ -133,8 +139,10 @@ export function SectionsPage(state) {
         <li class="item">
           <div>
             <div class="itemTitle">
-              <span class="kindIcon">${kindIconSvg(s.kind)}</span>
-              ${escapeHtml(s.title || 'Untitled')}
+              <a class="itemLink" href="#/s/${encodeURIComponent(s.id)}">
+                <span class="kindIcon">${kindIconSvg(s.kind)}</span>
+                ${escapeHtml(s.title || 'Untitled')}
+              </a>
             </div>
             <div class="itemMeta">
               <span class="badge">${escapeHtml(kindLabel(s.kind))}</span>
@@ -230,6 +238,18 @@ export function bindSectionsHandlers({ root, state, onState }) {
     if (e.key === 'Enter') add();
   });
 
+  // Empty-state quick create
+  root.querySelectorAll('[data-empty-create]')?.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const k = btn.getAttribute('data-empty-create') || SECTION_KINDS.NOTES;
+      const t = k === SECTION_KINDS.CHECKLIST ? 'New Checklist' : k === SECTION_KINDS.NOTES ? 'New Notes' : 'New Ideas';
+
+      const { next, created } = createSection({ title: t, kind: k, desc: '' }, state.sections);
+      onState({ ...state, sections: next });
+      window.location.hash = `#/s/${encodeURIComponent(created.id)}`;
+    });
+  });
+
   root.querySelectorAll('[data-edit-sec]')?.forEach((btn) => {
     btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-edit-sec');
@@ -254,14 +274,26 @@ export function bindSectionsHandlers({ root, state, onState }) {
       const current = (state.sections ?? []).find((s) => s.id === id);
       if (!current) return;
 
+      const data = loadSectionData(current.id, current.kind);
+      const hasData = (() => {
+        if (!data) return false;
+        if (typeof data.text === 'string') return data.text.trim().length > 0;
+        if (Array.isArray(data.items)) return data.items.length > 0;
+        return Object.keys(data).length > 0;
+      })();
+
+      const displayTitle = String(current.title || 'Untitled');
+
       const ok = await confirmDialog({
-        title: 'Delete section?',
-        message: `This will delete “${current.title}” and its local data on this device.`,
+        title: `Delete “${displayTitle}”?`,
+        message: hasData
+          ? `This will delete the section and its local content on this device. Type the section title to confirm.`
+          : 'This will delete the empty section on this device.',
         confirmText: 'Delete',
         cancelText: 'Cancel',
         tone: 'danger',
-        requireText: 'DELETE',
-        requirePlaceholder: 'DELETE',
+        requireText: hasData ? displayTitle : null,
+        requirePlaceholder: hasData ? displayTitle : 'Type to confirm…',
       });
       if (!ok) return;
 

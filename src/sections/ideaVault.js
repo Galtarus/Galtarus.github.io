@@ -51,7 +51,7 @@ export function initIdeaVaultState(state, { section }) {
     __data: {
       ...(state.__data ?? {}),
       [section.id]: {
-        items: items.length ? items : SEED,
+        items,
       },
     },
   };
@@ -128,7 +128,7 @@ export function IdeaVaultPage(state) {
       <div class="divider"></div>
       <div class="toolbar">
         <button class="btn" data-action="idea:add" type="button">${iconSvg('plus')} Add</button>
-        <button class="btn btnGhost" data-action="idea:seed" type="button">${iconSvg('spark')} Seed</button>
+        <button class="btn btnGhost" data-action="idea:seed" type="button">${iconSvg('spark')} Examples</button>
       </div>
     </div>
 
@@ -150,7 +150,7 @@ export function IdeaVaultPage(state) {
         .join('')}
     </ul>
 
-    ${items.length === 0 ? `<div class="divider"></div><div class="empty"><div class="emptyTitle">No ideas yet</div><div class="small">Add your first idea above (or use Seed).</div></div>` : ''}
+    ${items.length === 0 ? `<div class="divider"></div><div class="empty"><div class="emptyTitle">No ideas yet</div><div class="small">Add your first idea above, or insert a few examples.</div></div>` : ''}
     ${sorted.length === 0 && items.length > 0 ? `<div class="divider"></div><div class="small">No results.</div>` : ''}
   `;
 }
@@ -202,14 +202,19 @@ export function bindIdeaVaultHandlers({ root, state, onState }) {
   });
 
   root.querySelector('[data-action="section:delete"]')?.addEventListener('click', async () => {
+    const hasData = getItems(state, sid).length > 0;
+    const displayTitle = String(section.title || 'Untitled');
+
     const ok = await confirmDialog({
-      title: 'Delete section?',
-      message: `This will delete “${section.title}” and its local data on this device.`,
+      title: `Delete “${displayTitle}”?`,
+      message: hasData
+        ? 'This will delete the section and its local content on this device. Type the section title to confirm.'
+        : 'This will delete the empty section on this device.',
       confirmText: 'Delete',
       cancelText: 'Cancel',
       tone: 'danger',
-      requireText: 'DELETE',
-      requirePlaceholder: 'DELETE',
+      requireText: hasData ? displayTitle : null,
+      requirePlaceholder: hasData ? displayTitle : 'Type to confirm…',
     });
     if (!ok) return;
 

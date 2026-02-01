@@ -3,7 +3,7 @@ import { iconSvg, kindIconSvg } from '../components/icons.js';
 import { createSection, SECTION_KINDS } from '../stores/sectionsStore.js';
 
 function kindLabel(kind) {
-  if (kind === SECTION_KINDS.IDEA_VAULT) return 'Idea Vault';
+  if (kind === SECTION_KINDS.IDEA_VAULT) return 'Ideas';
   if (kind === SECTION_KINDS.CHECKLIST) return 'Checklist';
   if (kind === SECTION_KINDS.NOTES) return 'Notes';
   return kind || 'Section';
@@ -48,13 +48,13 @@ export function HomePage(state) {
           <div class="itemTitle" style="margin-bottom:6px">Quick actions</div>
           <div class="small">Create a section and start writing immediately.</div>
         </div>
-        <a class="btn btnGhost" href="#/sections">${iconSvg('grid')} Manage</a>
+        <a class="btn btnGhost" href="#/sections">${iconSvg('grid')} Sections</a>
       </div>
       <div class="divider"></div>
       <div class="row">
         <button class="btn" type="button" data-quick-create="${SECTION_KINDS.NOTES}">${kindIconSvg(SECTION_KINDS.NOTES)} New Notes</button>
         <button class="btn" type="button" data-quick-create="${SECTION_KINDS.CHECKLIST}">${kindIconSvg(SECTION_KINDS.CHECKLIST)} New Checklist</button>
-        <button class="btn" type="button" data-quick-create="${SECTION_KINDS.IDEA_VAULT}">${kindIconSvg(SECTION_KINDS.IDEA_VAULT)} New Idea Vault</button>
+        <button class="btn" type="button" data-quick-create="${SECTION_KINDS.IDEA_VAULT}">${kindIconSvg(SECTION_KINDS.IDEA_VAULT)} New Ideas</button>
       </div>
     </div>
 
@@ -105,7 +105,7 @@ export function bindHomeHandlers({ root, state, onState }) {
   root.querySelectorAll('[data-quick-create]')?.forEach((btn) => {
     btn.addEventListener('click', () => {
       const kind = btn.getAttribute('data-quick-create') || SECTION_KINDS.NOTES;
-      const title = kind === SECTION_KINDS.CHECKLIST ? 'New Checklist' : kind === SECTION_KINDS.IDEA_VAULT ? 'New Idea Vault' : 'New Notes';
+      const title = kind === SECTION_KINDS.CHECKLIST ? 'New Checklist' : kind === SECTION_KINDS.IDEA_VAULT ? 'New Ideas' : 'New Notes';
 
       const { next, created } = createSection({ title, kind, desc: '' }, state.sections);
       onState({ ...state, sections: next });

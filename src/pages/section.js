@@ -53,5 +53,5 @@ export function SectionTitle(state) {
 
   if (section.kind === SECTION_KINDS.CHECKLIST) return `Checklist - ${escapeHtml(section.title)}`;
   if (section.kind === SECTION_KINDS.NOTES) return `Notes - ${escapeHtml(section.title)}`;
-  return `Idea Vault - ${escapeHtml(section.title)}`;
+  return `Ideas - ${escapeHtml(section.title)}`;
 }

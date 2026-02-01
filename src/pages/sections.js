@@ -1,21 +1,24 @@
 import { escapeHtml } from '../lib/dom.js';
 import { downloadJson, readFileText, safeParseJson } from '../lib/storage.js';
+import { confirmDialog, editSectionDialog } from '../lib/dialogs.js';
+import { iconSvg, kindIconSvg } from '../components/icons.js';
 import {
   loadSections,
   saveSections,
-  addSection,
+  createSection,
   deleteSection,
+  updateSectionMeta,
   SECTION_KINDS,
   normalizeSections,
 } from '../stores/sectionsStore.js';
-import { loadSectionData, saveSectionData } from '../stores/sectionDataStore.js';
+import { loadSectionData, saveSectionData, deleteSectionData } from '../stores/sectionDataStore.js';
 
 export function initSectionsState(state) {
   return {
     ...state,
     sections: loadSections(),
     sectionsQuery: String(state.sectionsQuery ?? ''),
-    sectionsSort: String(state.sectionsSort ?? 'newest'),
+    sectionsSort: String(state.sectionsSort ?? 'recent'),
   };
 }
 
@@ -23,7 +26,8 @@ function sortSections(items, sort) {
   const arr = [...items];
   if (sort === 'title') arr.sort((a, b) => String(a.title).localeCompare(String(b.title)));
   else if (sort === 'kind') arr.sort((a, b) => String(a.kind).localeCompare(String(b.kind)));
-  else arr.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+  else if (sort === 'newest') arr.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+  else arr.sort((a, b) => (b.updatedAt ?? b.createdAt ?? 0) - (a.updatedAt ?? a.createdAt ?? 0));
   return arr;
 }
 
@@ -33,11 +37,19 @@ function kindLabel(kind) {
   return 'Idea Vault';
 }
 
-function kindIcon(kind) {
-  // simple, CSP-safe glyphs (no external assets)
-  if (kind === SECTION_KINDS.CHECKLIST) return '☑';
-  if (kind === SECTION_KINDS.NOTES) return '✎';
-  return '✦';
+function formatTime(ts) {
+  if (!Number.isFinite(ts)) return '';
+  try {
+    return new Date(ts).toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return '';
+  }
 }
 
 export function SectionsPage(state) {
@@ -52,27 +64,37 @@ export function SectionsPage(state) {
       })
     : sections;
 
-  const sorted = sortSections(filtered, state.sectionsSort ?? 'newest');
+  const sorted = sortSections(filtered, state.sectionsSort ?? 'recent');
 
   return /* html */ `
-    <h1 class="h1">Sections</h1>
+    <div class="pageHeader">
+      <div>
+        <h1 class="h1" style="margin:0 0 6px">Sections</h1>
+        <div class="small">Create, rename, and organize your offline sections.</div>
+      </div>
+      <a class="btn btnGhost" href="#/">${iconSvg('home')} Hub</a>
+    </div>
 
     <div class="panel">
       <div class="toolbar">
-        <input id="secTitle" class="field" placeholder="Nom de section…" autocomplete="off" />
+        <input id="secTitle" class="field" placeholder="Section title" autocomplete="off" />
         <select id="secKind" class="field select" aria-label="Type">
           <option value="${SECTION_KINDS.IDEA_VAULT}">Idea Vault</option>
           <option value="${SECTION_KINDS.CHECKLIST}">Checklist</option>
           <option value="${SECTION_KINDS.NOTES}">Notes</option>
         </select>
-        <button class="btn" id="secAdd" type="button">+ Ajouter</button>
+        <button class="btn" id="secAdd" type="button">${iconSvg('plus')} Create</button>
       </div>
       <div class="divider"></div>
+      <input id="secDesc" class="field" placeholder="Description (optional)" autocomplete="off" />
+
+      <div class="divider"></div>
       <div class="toolbar">
-        <input id="secSearch" class="field" placeholder="Rechercher sections…" value="${escapeHtml(state.sectionsQuery ?? '')}" />
+        <input id="secSearch" class="field" placeholder="Search sections" value="${escapeHtml(state.sectionsQuery ?? '')}" />
         <select id="secSort" class="field select" aria-label="Sort">
-          <option value="newest" ${state.sectionsSort === 'newest' ? 'selected' : ''}>Nouvelles</option>
-          <option value="title" ${state.sectionsSort === 'title' ? 'selected' : ''}>Titre</option>
+          <option value="recent" ${state.sectionsSort === 'recent' ? 'selected' : ''}>Last edited</option>
+          <option value="newest" ${state.sectionsSort === 'newest' ? 'selected' : ''}>Newest</option>
+          <option value="title" ${state.sectionsSort === 'title' ? 'selected' : ''}>Title</option>
           <option value="kind" ${state.sectionsSort === 'kind' ? 'selected' : ''}>Type</option>
         </select>
         <span class="badge">${sorted.length}/${sections.length}</span>
@@ -81,45 +103,60 @@ export function SectionsPage(state) {
       <div class="divider"></div>
       <div class="toolbar">
         <button class="btn btnGhost" id="btnExport" type="button">Export JSON</button>
-        <label class="btn btnGhost" for="importFile" style="cursor:pointer;">
-          Import…
-        </label>
+        <label class="btn btnGhost" for="importFile" style="cursor:pointer;">Import</label>
         <input id="importFile" type="file" accept="application/json" style="display:none" />
       </div>
 
       <div class="divider"></div>
-      <div class="small">Tout est offline (localStorage). Le CSP bloque le réseau. Export/Import sert à sauvegarder et synchroniser manuellement.</div>
+      <div class="small">Everything is offline (localStorage). CSP blocks all network requests. Export/Import is for manual backup/sync.</div>
     </div>
 
     <div class="divider"></div>
 
+    ${sections.length === 0 ? `
+      <div class="empty">
+        <div class="emptyTitle">No sections yet</div>
+        <div class="small">Create your first section above. Tip: start with a Notes section for quick captures.</div>
+      </div>
+      <div class="divider"></div>
+    ` : ''}
+
     <ul class="list">
       ${sorted
-        .map(
-          (s) => /* html */ `
+        .map((s) => {
+          const when = formatTime(s.updatedAt ?? s.createdAt);
+          return /* html */ `
         <li class="item">
           <div>
-            <div class="itemTitle"><span class="kind">${kindIcon(s.kind)}</span> ${escapeHtml(s.title || 'Untitled')}</div>
-            <div class="itemNote">${escapeHtml(kindLabel(s.kind))}${s.desc ? ` • ${escapeHtml(s.desc)}` : ''}</div>
+            <div class="itemTitle">
+              <span class="kindIcon">${kindIconSvg(s.kind)}</span>
+              ${escapeHtml(s.title || 'Untitled')}
+            </div>
+            <div class="itemMeta">
+              <span class="badge">${escapeHtml(kindLabel(s.kind))}</span>
+              ${when ? `<span class="badge">Edited ${escapeHtml(when)}</span>` : ''}
+            </div>
+            ${s.desc ? `<div class="itemNote">${escapeHtml(s.desc)}</div>` : ''}
           </div>
           <div class="toolbar" style="justify-content:flex-end">
             <a class="btn" href="#/s/${encodeURIComponent(s.id)}" style="min-height: var(--tap);">Open</a>
-            <button class="iconBtn" type="button" data-del-sec="${escapeHtml(s.id)}" title="Delete" aria-label="Delete">✕</button>
+            <button class="iconBtn" type="button" data-edit-sec="${escapeHtml(s.id)}" title="Edit" aria-label="Edit">${iconSvg('edit')}</button>
+            <button class="iconBtn" type="button" data-del-sec="${escapeHtml(s.id)}" title="Delete" aria-label="Delete">${iconSvg('trash')}</button>
           </div>
         </li>
-      `
-        )
+      `;
+        })
         .join('')}
     </ul>
 
-    ${sorted.length === 0 ? `<div class="divider"></div><div class="small">Aucun résultat.</div>` : ''}
+    ${sorted.length === 0 && sections.length > 0 ? `<div class="divider"></div><div class="small">No results.</div>` : ''}
   `;
 }
 
 function exportAll(sections) {
   const payload = {
     app: 'galtarus',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     sections,
     data: {},
@@ -159,6 +196,7 @@ function importAll(rawText) {
 
 export function bindSectionsHandlers({ root, state, onState }) {
   const title = root.querySelector('#secTitle');
+  const desc = root.querySelector('#secDesc');
   const kind = root.querySelector('#secKind');
   const search = root.querySelector('#secSearch');
   const sort = root.querySelector('#secSort');
@@ -171,15 +209,28 @@ export function bindSectionsHandlers({ root, state, onState }) {
 
   const add = () => {
     const t = (title?.value ?? '').trim();
-    if (!t) return;
+    if (!t) {
+      title?.focus({ preventScroll: true });
+      return;
+    }
 
-    const k = (kind?.value ?? SECTION_KINDS.IDEA_VAULT);
-    const next = addSection({ title: t, kind: k, desc: '' }, state.sections);
+    const k = kind?.value ?? SECTION_KINDS.IDEA_VAULT;
+    const d = (desc?.value ?? '').trim();
+
+    const { next, created } = createSection({ title: t, kind: k, desc: d }, state.sections);
 
     if (title) title.value = '';
+    if (desc) desc.value = '';
     title?.focus({ preventScroll: true });
 
     onState({ ...state, sections: next });
+
+    // Optional: open the created section immediately when user holds Alt (desktop power-user)
+    // Avoid auto-navigation on mobile.
+    // eslint-disable-next-line no-undef
+    if (window.event?.altKey) {
+      window.location.hash = `#/s/${encodeURIComponent(created.id)}`;
+    }
   };
 
   root.querySelector('#secAdd')?.addEventListener('click', add);
@@ -187,9 +238,41 @@ export function bindSectionsHandlers({ root, state, onState }) {
     if (e.key === 'Enter') add();
   });
 
+  root.querySelectorAll('[data-edit-sec]')?.forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-edit-sec');
+      const current = (state.sections ?? []).find((s) => s.id === id);
+      if (!current) return;
+
+      const res = await editSectionDialog({
+        title: 'Edit section',
+        initialTitle: current.title,
+        initialDesc: current.desc,
+      });
+      if (!res) return;
+      if (!res.title) return;
+
+      const next = updateSectionMeta(id, { title: res.title, desc: res.desc }, state.sections);
+      onState({ ...state, sections: next });
+    });
+  });
+
   root.querySelectorAll('[data-del-sec]')?.forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-del-sec');
+      const current = (state.sections ?? []).find((s) => s.id === id);
+      if (!current) return;
+
+      const ok = await confirmDialog({
+        title: 'Delete section?',
+        message: `This will delete "${escapeHtml(current.title)}" and its local data on this device.`,
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        tone: 'danger',
+      });
+      if (!ok) return;
+
+      deleteSectionData(current.id, current.kind);
       const next = deleteSection(id, state.sections);
       onState({ ...state, sections: next });
     });

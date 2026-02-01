@@ -1,4 +1,4 @@
-import { HomePage } from './pages/home.js';
+import { HomePage, bindHomeHandlers } from './pages/home.js';
 import { SectionsPage, bindSectionsHandlers, initSectionsState } from './pages/sections.js';
 import { SearchPage, bindSearchHandlers, initSearchState } from './pages/search.js';
 import { LegacyIdeasPage } from './pages/legacyIdeas.js';
@@ -9,6 +9,7 @@ const routes = {
     title: 'Hub',
     initState: initSectionsState,
     render: (state) => HomePage(state),
+    bind: bindHomeHandlers,
   },
   '#/sections': {
     title: 'Sections',
@@ -29,17 +30,24 @@ const routes = {
   },
 };
 
+export function routeKey(hash) {
+  return String(hash || '#/').split('?')[0];
+}
+
 export function resolveRoute(hash) {
-  if (hash.startsWith('#/s/')) {
-    const sectionId = decodeURIComponent(hash.slice('#/s/'.length));
+  const key = routeKey(hash);
+
+  if (key.startsWith('#/s/')) {
+    const sectionId = decodeURIComponent(key.slice('#/s/'.length));
     return {
       title: 'Section',
       titleFromState: SectionTitle,
       initState: (state) => initSectionState(state, { sectionId }),
       render: (state) => SectionPage(state),
       bind: bindSectionHandlers,
+      __key: key,
     };
   }
 
-  return routes[hash] ?? routes['#/'];
+  return { ...(routes[key] ?? routes['#/']), __key: key };
 }

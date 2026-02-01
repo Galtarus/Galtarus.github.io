@@ -1,15 +1,20 @@
 export function AboutPage() {
   return /* html */ `
-    <h1 class="h1">À propos</h1>
+    <h1 class="h1">INCIDENT REPORT</h1>
     <p class="p">
-      Architecture volontairement minimaliste: un mini routeur, des pages sous forme de fonctions qui renvoient du HTML,
-      et un layout commun.
+      On pensait construire une SPA. La SPA a décidé de construire <em>toi</em>.
     </p>
 
     <ul class="p">
-      <li>Hash routing: <span class="kbd">#/</span>, <span class="kbd">#/about</span>, ...</li>
-      <li>Aucune dépendance, aucun build</li>
-      <li>Facile à upgrader vers Vite/React/etc si un jour tu veux</li>
+      <li>Hash routing: <span class="kbd">#/</span>, <span class="kbd">#/about</span>, <span class="kbd">#/lab</span></li>
+      <li>Zéro dépendance. Zéro build. Zéro témoin.</li>
+      <li>UI: neon‑void, scanlines, bruit cosmique.</li>
+      <li>Objectif: être “meme worthy” + "alien im watching you" + goblin energy.</li>
     </ul>
+
+    <p class="small" style="margin-top:12px">
+      Note: si tu veux un vrai glitch (secousses, chroma shift, etc.), je peux l’ajouter, mais je respecte
+      <span class="kbd">prefers-reduced-motion</span> par défaut.
+    </p>
   `;
 }

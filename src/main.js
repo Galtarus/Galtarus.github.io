@@ -72,5 +72,17 @@ function setState(next) {
   render();
 }
 
+// Global UI affordances (event delegation so re-renders don't break handlers)
+document.addEventListener('click', (e) => {
+  const el = e.target?.closest?.('[data-skip]');
+  if (!el) return;
+
+  e.preventDefault();
+  const view = qs('#view');
+  if (view && typeof view.focus === 'function') {
+    view.focus({ preventScroll: true });
+  }
+});
+
 window.addEventListener('hashchange', render);
 window.addEventListener('DOMContentLoaded', render);

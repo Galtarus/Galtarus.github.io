@@ -4,6 +4,7 @@ export function Layout({ title = 'GALTARUS', currentPath = '#/' } = {}) {
   const isCurrent = (p) => (p === currentPath ? 'aria-current="page"' : '');
 
   return /* html */ `
+    <button class="skipLink" type="button" data-skip>Skip to content</button>
     <div class="container">
       <div class="shell">
         <header class="topbar">
@@ -16,7 +17,7 @@ export function Layout({ title = 'GALTARUS', currentPath = '#/' } = {}) {
           </div>
         </header>
 
-        <main class="main" id="view" aria-live="polite"></main>
+        <main class="main" id="view" aria-live="polite" tabindex="-1"></main>
 
         <nav class="tabs" aria-label="Navigation">
           <a href="#/" ${isCurrent('#/')}>${iconSvg('home')}<span class="label">Home</span></a>

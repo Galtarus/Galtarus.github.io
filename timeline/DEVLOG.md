@@ -28,3 +28,12 @@ Next: implement real browse UI + stronger entry details.
 - Tweaked CSP to explicitly allow YouTube frames (nocookie + youtube.com) and https images.
 - Improved focus visibility for keyboard users.
 - `ui.el()` now correctly applies `value`/`checked` as properties (needed for `<select>` state).
+
+## Cycle 5 — entry images (vertical slice)
+
+- Added optional `imageUrl` field to entries.
+- Editor supports editing an https image URL.
+- Entry detail renders the image (lazy-loaded, no-referrer).
+
+What to review:
+- Create/edit an entry, set an `https://…` image URL, ensure it shows on the entry detail page.

@@ -21,6 +21,7 @@ export function viewEdit({ root, store, setStore, navigate, id }) {
       formRow('Summary', inputTextarea('summary', entry.summary, 'What happened?')),
       formRow('Tags (comma-separated)', inputText('tags', (entry.tags || []).join(', '), 'e.g. launch, ui')),
       formRow('YouTube ID (optional)', inputText('youtubeId', entry.youtubeId || '', 'e.g. dQw4w9WgXcQ')),
+      formRow('Image URL (optional, https)', inputText('imageUrl', entry.imageUrl || '', 'https://…')),
       el('div', { class: 'hr' }),
       el('div', { class: 'row wrap' },
         el('button', {
@@ -58,6 +59,7 @@ export function viewEdit({ root, store, setStore, navigate, id }) {
     const summary = left.querySelector('[name="summary"]').value.trim();
     const tagsRaw = left.querySelector('[name="tags"]').value;
     const youtubeId = left.querySelector('[name="youtubeId"]').value.trim();
+    const imageUrl = left.querySelector('[name="imageUrl"]').value.trim();
 
     const tags = tagsRaw
       .split(',')
@@ -74,7 +76,15 @@ export function viewEdit({ root, store, setStore, navigate, id }) {
 
     if (isNew) {
       const newId = genId();
-      const newEntry = { id: newId, date: cleanDate, title, summary, tags, youtubeId: youtubeId || null };
+      const newEntry = {
+        id: newId,
+        date: cleanDate,
+        title,
+        summary,
+        tags,
+        youtubeId: youtubeId || null,
+        imageUrl: normalizeImageUrl(imageUrl),
+      };
       const nextEntries = [...store.entries, newEntry];
       setStore({ entries: nextEntries, selectedId: newId });
       navigate(`/entry/${newId}`);
@@ -94,6 +104,7 @@ export function viewEdit({ root, store, setStore, navigate, id }) {
       summary,
       tags,
       youtubeId: youtubeId || null,
+      imageUrl: normalizeImageUrl(imageUrl),
     };
 
     const nextEntries = store.entries.map((e) => (e.id === existing.id ? updated : e));
@@ -156,4 +167,15 @@ function todayISO() {
 function genId() {
   if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
   return `e-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeImageUrl(url) {
+  const u = (url || '').trim();
+  if (!u) return null;
+  // Keep CSP simple: allow only https images by convention.
+  if (!u.startsWith('https://')) {
+    alert('Image URL must start with https:// (or leave it blank).');
+    return null;
+  }
+  return u;
 }

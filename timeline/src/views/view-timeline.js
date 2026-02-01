@@ -152,6 +152,7 @@ function previewDetail(entry, navigate) {
     ),
     el('h3', {}, entry.title || '(Untitled)'),
     entry.summary ? el('p', {}, entry.summary) : el('p', { class: 'muted' }, 'No summary.'),
+    entry.imageUrl ? el('div', { class: 'footer-note' }, 'Has image') : null,
     el('div', { class: 'row wrap' },
       el('button', { class: 'btn primary', type: 'button', onclick: () => navigate(`/entry/${entry.id}`) }, 'Open'),
       el('button', { class: 'btn', type: 'button', onclick: () => navigate(`/edit/${entry.id}`) }, 'Edit')

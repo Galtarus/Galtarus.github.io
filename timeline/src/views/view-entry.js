@@ -53,6 +53,19 @@ function entryDetail(entry) {
     ),
     el('h3', {}, entry.title || '(Untitled)'),
     entry.summary ? el('p', {}, entry.summary) : el('p', { class: 'muted' }, 'No summary.'),
+    entry.imageUrl ? entryImage(entry.imageUrl, entry.title) : null,
     entry.youtubeId ? ytEmbed(entry.youtubeId) : null
+  );
+}
+
+function entryImage(url, title) {
+  return el('figure', { class: 'embed-shell' },
+    el('img', {
+      src: url,
+      alt: title ? `Image for: ${title}` : 'Entry image',
+      loading: 'lazy',
+      style: 'width: 100%; height: auto; border-radius: 12px; display: block',
+      referrerpolicy: 'no-referrer',
+    })
   );
 }

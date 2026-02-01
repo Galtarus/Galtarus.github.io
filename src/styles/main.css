@@ -23,6 +23,7 @@
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
+html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
@@ -202,6 +203,27 @@ a:hover { text-decoration: underline; }
 }
 
 .small { font-size: 13px; color: rgba(170,255,225,0.6); }
+
+/* Mobile */
+@media (max-width: 640px) {
+  .container { padding: 14px; }
+  .header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .brand { justify-content: center; }
+
+  .nav { justify-content: center; flex-wrap: wrap; }
+  .nav a { padding: 10px 14px; }
+
+  .main { margin-top: 12px; padding: 14px; }
+  .h1 { font-size: 22px; }
+
+  .btn { padding: 12px 14px; }
+  .row { gap: 10px; }
+}
+
+@media (max-width: 420px) {
+  .row { flex-direction: column; }
+  .btn { width: 100%; }
+}
 
 /* Accessibility: respect reduced motion */
 @media (prefers-reduced-motion: reduce) {

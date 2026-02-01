@@ -74,11 +74,11 @@ export function SearchPage(state) {
 
     <div class="panel">
       <div class="toolbar">
-        <input id="globalSearch" class="field" placeholder="Rechercher partout…" value="${escapeHtml(q0)}" />
+        <input id="globalSearch" class="field" placeholder="Search everywhere…" value="${escapeHtml(q0)}" />
         <span class="badge">${q ? results.length : '—'}</span>
       </div>
       <div class="divider"></div>
-      <div class="small">Recherche offline dans les titres/desc, Idea Vault, Checklists et Notes.</div>
+      <div class="small">Offline search across titles/descriptions, Idea Vault items, Checklists, and Notes.</div>
     </div>
 
     <div class="divider"></div>
@@ -99,7 +99,7 @@ export function SearchPage(state) {
         .join('')}
     </ul>
 
-    ${q && results.length === 0 ? `<div class="small">Aucun résultat.</div>` : ''}
+    ${q && results.length === 0 ? `<div class="small">No results.</div>` : ''}
   `;
 }
 
@@ -107,5 +107,13 @@ export function bindSearchHandlers({ root, state, onState }) {
   const input = root.querySelector('#globalSearch');
   input?.addEventListener('input', (e) => {
     onState({ ...state, searchQuery: e.target.value });
+  });
+
+  input?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      onState({ ...state, searchQuery: '' });
+      input.value = '';
+    }
   });
 }

@@ -205,6 +205,15 @@ export function bindSectionsHandlers({ root, state, onState }) {
   const setListState = (patch) => onState({ ...state, ...patch });
 
   search?.addEventListener('input', (e) => setListState({ sectionsQuery: e.target.value }));
+  search?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setListState({ sectionsQuery: '' });
+      // keep focus for quick retry
+      search.value = '';
+    }
+  });
+
   sort?.addEventListener('change', (e) => setListState({ sectionsSort: e.target.value }));
 
   const add = () => {
@@ -235,6 +244,10 @@ export function bindSectionsHandlers({ root, state, onState }) {
 
   root.querySelector('#secAdd')?.addEventListener('click', add);
   title?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') add();
+  });
+
+  desc?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') add();
   });
 

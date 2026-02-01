@@ -3,13 +3,19 @@ import { Layout } from './components/layout.js';
 import { resolveRoute } from './router.js';
 
 const app = qs('#app');
-let state = { text: '', mode: 'goblin' };
+let state = { text: '', mode: 'goblin', ideas: null };
 
 function render() {
   const hash = window.location.hash || '#/';
   const route = resolveRoute(hash);
 
-  setHTML(app, Layout({ title: 'GALTARUS • MEME BOX', currentPath: hash }));
+  // allow pages to initialize state (e.g. load localStorage)
+  if (route.initState && !state.__inited?.[hash]) {
+    state = route.initState(state);
+    state.__inited = { ...(state.__inited ?? {}), [hash]: true };
+  }
+
+  setHTML(app, Layout({ title: 'GALTARUS • HUB', currentPath: hash }));
 
   const view = qs('#view');
   setHTML(view, route.render(state));

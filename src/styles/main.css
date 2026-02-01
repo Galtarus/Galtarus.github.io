@@ -5,8 +5,9 @@
   --surface2: rgba(255, 255, 255, 0.04);
   --text: rgba(255, 255, 255, 0.92);
   --muted: rgba(255, 255, 255, 0.66);
-  --accent: #7dd3fc;   /* sky */
-  --accent2: #a78bfa;  /* violet */
+  --accent: #7dd3fc; /* sky */
+  --accent2: #a78bfa; /* violet */
+  --danger: #fb7185;
   --border: rgba(255, 255, 255, 0.12);
   --shadow: 0 18px 55px rgba(0, 0, 0, 0.45);
   --radius: 18px;
@@ -21,7 +22,7 @@ html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
   background:
     radial-gradient(900px 600px at 15% 10%, rgba(125, 211, 252, 0.16), transparent 60%),
     radial-gradient(900px 600px at 85% 20%, rgba(167, 139, 250, 0.14), transparent 60%),
@@ -78,6 +79,7 @@ a:hover { text-decoration: underline; }
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .badge {
@@ -117,6 +119,14 @@ a:hover { text-decoration: underline; }
   letter-spacing: 0.2px;
 }
 
+.itemMeta {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 .itemNote {
   margin-top: 4px;
   color: var(--muted);
@@ -132,8 +142,12 @@ a:hover { text-decoration: underline; }
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.04);
   color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
+.iconBtn svg { width: 18px; height: 18px; opacity: 0.9; }
 .iconBtn:hover { background: rgba(255,255,255,0.07); }
 
 .container {
@@ -225,7 +239,7 @@ a:hover { text-decoration: underline; }
   letter-spacing: 0.2px;
 }
 
-.p  { color: var(--muted); line-height: 1.55; margin: 0 0 14px; }
+.p { color: var(--muted); line-height: 1.55; margin: 0 0 14px; }
 
 .row { display: flex; gap: 12px; flex-wrap: wrap; }
 
@@ -244,10 +258,22 @@ a:hover { text-decoration: underline; }
   transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
 }
 
+.btn svg { width: 18px; height: 18px; opacity: 0.95; }
+
 .btnGhost {
   background: rgba(0,0,0,0.14);
   border-color: rgba(255,255,255,0.12);
   color: var(--muted);
+}
+
+.btnDanger {
+  border-color: rgba(251, 113, 133, 0.35);
+  background: rgba(251, 113, 133, 0.14);
+}
+
+.btnDanger:hover {
+  border-color: rgba(251, 113, 133, 0.55);
+  background: rgba(251, 113, 133, 0.18);
 }
 
 .btnGhost:hover {
@@ -324,12 +350,53 @@ a:hover { text-decoration: underline; }
   margin-bottom: 12px;
 }
 
-.kind {
+.kindIcon {
   display: inline-flex;
   width: 20px;
+  height: 20px;
+  align-items: center;
   justify-content: center;
-  opacity: 0.85;
+  opacity: 0.9;
 }
+
+.kindIcon svg { width: 20px; height: 20px; }
+
+.empty {
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px dashed rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.03);
+}
+
+.emptyTitle { font-weight: 700; margin-bottom: 4px; }
+
+/* Dialog */
+.dialog {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  max-width: min(560px, calc(100vw - 24px));
+}
+
+.dialog::backdrop {
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+}
+
+.dialogCard {
+  background: rgba(15, 18, 30, 0.92);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 16px;
+  box-shadow: 0 26px 85px rgba(0,0,0,0.62);
+  padding: 14px;
+}
+
+.dialogHeader { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dialogTitle { font-weight: 750; letter-spacing: 0.2px; }
+.dialogBody { margin-top: 10px; color: var(--muted); line-height: 1.55; }
+.dialogActions { margin-top: 12px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.dialogLabel { display: block; font-size: 13px; color: var(--muted); margin: 0 0 6px; }
 
 /* Checklist */
 .ckRow {

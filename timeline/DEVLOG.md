@@ -15,3 +15,9 @@ Next: implement real browse UI + stronger entry details.
   - Desktop: horizontal scrollable timeline on the left + right-panel preview for the selected entry.
   - Mobile: vertical list; tapping an entry opens the dedicated detail route.
 - Entry detail route improved with prev/next navigation.
+
+## Cycle 3 — editor + persistence
+
+- Implemented add/edit entry form (`#/edit/new` and `#/edit/<id>`).
+- Save/update/delete entries persisted to `localStorage`.
+- Basic validation (title required; date optional but must be YYYY-MM-DD if provided).

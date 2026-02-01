@@ -103,10 +103,12 @@ export function bindNotesHandlers({ root, state, onState }) {
   root.querySelector('[data-action="section:delete"]')?.addEventListener('click', async () => {
     const ok = await confirmDialog({
       title: 'Delete section?',
-      message: 'This will delete the section and its local data on this device.',
+      message: `This will delete “${section.title}” and its local data on this device.`,
       confirmText: 'Delete',
       cancelText: 'Cancel',
       tone: 'danger',
+      requireText: 'DELETE',
+      requirePlaceholder: 'DELETE',
     });
     if (!ok) return;
 

@@ -1,17 +1,15 @@
 import { escapeHtml } from '../lib/dom.js';
-import { downloadJson, readFileText, safeParseJson } from '../lib/storage.js';
 import { confirmDialog, editSectionDialog } from '../lib/dialogs.js';
+import { exportAll, importAllFromFile } from '../lib/appData.js';
 import { iconSvg, kindIconSvg } from '../components/icons.js';
 import {
   loadSections,
-  saveSections,
   createSection,
   deleteSection,
   updateSectionMeta,
   SECTION_KINDS,
-  normalizeSections,
 } from '../stores/sectionsStore.js';
-import { loadSectionData, saveSectionData, deleteSectionData } from '../stores/sectionDataStore.js';
+import { deleteSectionData } from '../stores/sectionDataStore.js';
 
 export function initSectionsState(state) {
   return {
@@ -72,21 +70,27 @@ export function SectionsPage(state) {
         <h1 class="h1" style="margin:0 0 6px">Sections</h1>
         <div class="small">Create, rename, and organize your offline sections.</div>
       </div>
-      <a class="btn btnGhost" href="#/">${iconSvg('home')} Hub</a>
+      <div class="toolbar" style="justify-content:flex-end">
+        <a class="btn btnGhost" href="#/settings">${iconSvg('settings')} Settings</a>
+        <a class="btn btnGhost" href="#/">${iconSvg('home')} Hub</a>
+      </div>
     </div>
 
     <div class="panel">
+      <div class="itemTitle" style="margin-bottom:8px">Create a section</div>
       <div class="toolbar">
-        <input id="secTitle" class="field" placeholder="Section title" autocomplete="off" />
+        <input id="secTitle" class="field" placeholder="Title (required)" autocomplete="off" />
         <select id="secKind" class="field select" aria-label="Type">
           <option value="${SECTION_KINDS.IDEA_VAULT}">Idea Vault</option>
           <option value="${SECTION_KINDS.CHECKLIST}">Checklist</option>
           <option value="${SECTION_KINDS.NOTES}">Notes</option>
         </select>
-        <button class="btn" id="secAdd" type="button">${iconSvg('plus')} Create</button>
+        <button class="btn" id="secAdd" type="button" disabled>${iconSvg('plus')} Create</button>
       </div>
       <div class="divider"></div>
       <input id="secDesc" class="field" placeholder="Description (optional)" autocomplete="off" />
+      <div class="divider"></div>
+      <div class="small">Tip: press <span class="kbd">Enter</span> to create. Hold <span class="kbd">Alt</span> while creating to open immediately (desktop).</div>
 
       <div class="divider"></div>
       <div class="toolbar">
@@ -103,12 +107,12 @@ export function SectionsPage(state) {
       <div class="divider"></div>
       <div class="toolbar">
         <button class="btn btnGhost" id="btnExport" type="button">Export JSON</button>
-        <label class="btn btnGhost" for="importFile" style="cursor:pointer;">Import</label>
+        <label class="btn btnGhost" for="importFile" style="cursor:pointer;">Import JSON</label>
         <input id="importFile" type="file" accept="application/json" style="display:none" />
       </div>
 
       <div class="divider"></div>
-      <div class="small">Everything is offline (localStorage). CSP blocks all network requests. Export/Import is for manual backup/sync.</div>
+      <div class="small">Everything is stored locally (localStorage). Export/Import is your backup.</div>
     </div>
 
     <div class="divider"></div>
@@ -116,7 +120,7 @@ export function SectionsPage(state) {
     ${sections.length === 0 ? `
       <div class="empty">
         <div class="emptyTitle">No sections yet</div>
-        <div class="small">Create your first section above. Tip: start with a Notes section for quick captures.</div>
+        <div class="small">Create your first section above. A <b>Notes</b> section is great for quick capture.</div>
       </div>
       <div class="divider"></div>
     ` : ''}
@@ -149,60 +153,34 @@ export function SectionsPage(state) {
         .join('')}
     </ul>
 
-    ${sorted.length === 0 && sections.length > 0 ? `<div class="divider"></div><div class="small">No results.</div>` : ''}
+    ${sorted.length === 0 && sections.length > 0 ? `
+      <div class="divider"></div>
+      <div class="empty">
+        <div class="emptyTitle">No results</div>
+        <div class="small">Try a different search, or press <span class="kbd">Esc</span> to clear.</div>
+      </div>
+    ` : ''}
   `;
-}
-
-function exportAll(sections) {
-  const payload = {
-    app: 'galtarus',
-    version: 2,
-    exportedAt: new Date().toISOString(),
-    sections,
-    data: {},
-  };
-
-  for (const s of sections) {
-    payload.data[s.id] = {
-      kind: s.kind,
-      data: loadSectionData(s.id, s.kind) ?? null,
-    };
-  }
-
-  downloadJson(`galtarus-export-${new Date().toISOString().slice(0, 10)}.json`, payload);
-}
-
-function importAll(rawText) {
-  const parsed = safeParseJson(rawText);
-  if (!parsed || parsed.app !== 'galtarus' || !parsed.sections) {
-    return { ok: false, reason: 'invalid_format' };
-  }
-
-  const sections = normalizeSections(parsed.sections);
-  if (!sections?.length) return { ok: false, reason: 'no_sections' };
-
-  saveSections(sections);
-
-  const data = parsed.data && typeof parsed.data === 'object' ? parsed.data : {};
-  for (const s of sections) {
-    const entry = data[s.id];
-    if (entry && entry.kind === s.kind && entry.data) {
-      saveSectionData(s.id, s.kind, entry.data);
-    }
-  }
-
-  return { ok: true, sections };
 }
 
 export function bindSectionsHandlers({ root, state, onState }) {
   const title = root.querySelector('#secTitle');
   const desc = root.querySelector('#secDesc');
   const kind = root.querySelector('#secKind');
+  const addBtn = root.querySelector('#secAdd');
   const search = root.querySelector('#secSearch');
   const sort = root.querySelector('#secSort');
   const file = root.querySelector('#importFile');
 
   const setListState = (patch) => onState({ ...state, ...patch });
+
+  const syncCreateEnabled = () => {
+    const ok = Boolean((title?.value ?? '').trim());
+    if (addBtn) addBtn.disabled = !ok;
+  };
+
+  title?.addEventListener('input', syncCreateEnabled);
+  syncCreateEnabled();
 
   search?.addEventListener('input', (e) => setListState({ sectionsQuery: e.target.value }));
   search?.addEventListener('keydown', (e) => {
@@ -230,6 +208,7 @@ export function bindSectionsHandlers({ root, state, onState }) {
 
     if (title) title.value = '';
     if (desc) desc.value = '';
+    syncCreateEnabled();
     title?.focus({ preventScroll: true });
 
     onState({ ...state, sections: next });
@@ -242,7 +221,7 @@ export function bindSectionsHandlers({ root, state, onState }) {
     }
   };
 
-  root.querySelector('#secAdd')?.addEventListener('click', add);
+  addBtn?.addEventListener('click', add);
   title?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') add();
   });
@@ -262,8 +241,7 @@ export function bindSectionsHandlers({ root, state, onState }) {
         initialTitle: current.title,
         initialDesc: current.desc,
       });
-      if (!res) return;
-      if (!res.title) return;
+      if (!res || !res.title) return;
 
       const next = updateSectionMeta(id, { title: res.title, desc: res.desc }, state.sections);
       onState({ ...state, sections: next });
@@ -278,10 +256,12 @@ export function bindSectionsHandlers({ root, state, onState }) {
 
       const ok = await confirmDialog({
         title: 'Delete section?',
-        message: `This will delete "${escapeHtml(current.title)}" and its local data on this device.`,
+        message: `This will delete “${current.title}” and its local data on this device.`,
         confirmText: 'Delete',
         cancelText: 'Cancel',
         tone: 'danger',
+        requireText: 'DELETE',
+        requirePlaceholder: 'DELETE',
       });
       if (!ok) return;
 
@@ -299,8 +279,7 @@ export function bindSectionsHandlers({ root, state, onState }) {
     const f = file.files?.[0];
     if (!f) return;
 
-    const text = await readFileText(f);
-    const res = importAll(text);
+    const res = await importAllFromFile(f);
     if (res.ok) {
       onState({ ...state, sections: res.sections });
     }

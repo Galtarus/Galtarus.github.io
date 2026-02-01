@@ -1,6 +1,7 @@
 import { escapeHtml } from '../lib/dom.js';
 import { loadSections } from '../stores/sectionsStore.js';
 import { loadSectionData } from '../stores/sectionDataStore.js';
+import { iconSvg } from '../components/icons.js';
 
 export function initSearchState(state) {
   return {
@@ -70,7 +71,13 @@ export function SearchPage(state) {
   }
 
   return /* html */ `
-    <h1 class="h1">Search</h1>
+    <div class="pageHeader">
+      <div>
+        <h1 class="h1" style="margin:0 0 6px">Search</h1>
+        <div class="small">Offline search across titles, descriptions, and section content.</div>
+      </div>
+      <a class="btn btnGhost" href="#/settings">${iconSvg('settings')} Settings</a>
+    </div>
 
     <div class="panel">
       <div class="toolbar">
@@ -78,33 +85,45 @@ export function SearchPage(state) {
         <span class="badge">${q ? results.length : '—'}</span>
       </div>
       <div class="divider"></div>
-      <div class="small">Offline search across titles/descriptions, Idea Vault items, Checklists, and Notes.</div>
+      <div class="small">Tip: press <span class="kbd">Esc</span> to clear.</div>
     </div>
 
     <div class="divider"></div>
 
-    <ul class="list">
-      ${results
-        .map(
-          (r) => /* html */ `
-        <li class="item">
-          <div>
-            <div class="itemTitle">${escapeHtml(r.section.title || 'Untitled')}</div>
-            ${r.note ? `<div class="itemNote">${escapeHtml(r.note)}</div>` : ''}
-          </div>
-          <a class="btn" href="#/s/${encodeURIComponent(r.section.id)}">Open</a>
-        </li>
-      `
-        )
-        .join('')}
-    </ul>
+    ${!q0 ? `
+      <div class="empty">
+        <div class="emptyTitle">Start typing to search</div>
+        <div class="small">Try a section name, a checklist item, or a phrase from your notes.</div>
+        <div class="divider"></div>
+        <a class="btn btnGhost" href="#/sections">${iconSvg('grid')} Browse sections</a>
+      </div>
+    ` : ''}
 
-    ${q && results.length === 0 ? `<div class="small">No results.</div>` : ''}
+    ${q ? `
+      <ul class="list">
+        ${results
+          .map(
+            (r) => /* html */ `
+          <li class="item">
+            <div>
+              <div class="itemTitle">${escapeHtml(r.section.title || 'Untitled')}</div>
+              ${r.note ? `<div class="itemNote">${escapeHtml(r.note)}</div>` : ''}
+            </div>
+            <a class="btn" href="#/s/${encodeURIComponent(r.section.id)}">Open</a>
+          </li>
+        `
+          )
+          .join('')}
+      </ul>
+
+      ${results.length === 0 ? `<div class="empty" style="margin-top:12px"><div class="emptyTitle">No results</div><div class="small">Try a shorter query, or search in a specific section.</div></div>` : ''}
+    ` : ''}
   `;
 }
 
 export function bindSearchHandlers({ root, state, onState }) {
   const input = root.querySelector('#globalSearch');
+
   input?.addEventListener('input', (e) => {
     onState({ ...state, searchQuery: e.target.value });
   });
@@ -116,4 +135,7 @@ export function bindSearchHandlers({ root, state, onState }) {
       input.value = '';
     }
   });
+
+  // nice default: focus search on page open
+  setTimeout(() => input?.focus?.({ preventScroll: true }), 0);
 }

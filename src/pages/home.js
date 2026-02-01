@@ -36,7 +36,10 @@ export function HomePage(state) {
         <h1 class="h1" style="margin:0 0 6px">Hub</h1>
         <div class="small">Your offline home for notes, checklists, and idea vaults.</div>
       </div>
-      <a class="btn btnGhost" href="#/search">${iconSvg('search')} Search</a>
+      <div class="toolbar" style="justify-content:flex-end">
+        <a class="btn btnGhost" href="#/settings">${iconSvg('settings')} Settings</a>
+        <a class="btn btnGhost" href="#/search">${iconSvg('search')} Search</a>
+      </div>
     </div>
 
     <div class="panel">

@@ -1,5 +1,7 @@
 // Lightweight dialog helpers (CSP-safe, no external deps)
 
+import { escapeHtml } from './dom.js';
+
 function ensureDialog() {
   let dlg = document.getElementById('appDialog');
   if (dlg) return dlg;
@@ -19,9 +21,12 @@ function setDialogHTML(dlg, html) {
 export function confirmDialog({
   title = 'Confirm',
   message = 'Are you sure?',
+  messageHtml = null,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   tone = 'danger', // danger | neutral
+  requireText = null, // e.g. "DELETE" or a section title
+  requirePlaceholder = 'Type to confirm…',
 } = {}) {
   const dlg = ensureDialog();
 
@@ -31,21 +36,47 @@ export function confirmDialog({
       resolve(dlg.returnValue === 'ok');
     };
 
+    const safeTitle = escapeHtml(title);
+    const safeMessage = messageHtml != null ? String(messageHtml) : escapeHtml(message);
+    const needsText = typeof requireText === 'string' && requireText.length > 0;
+    const reqId = 'dlgConfirmText';
+
     setDialogHTML(
       dlg,
       /* html */ `
         <form method="dialog" class="dialogCard">
           <div class="dialogHeader">
-            <div class="dialogTitle">${title}</div>
+            <div class="dialogTitle">${safeTitle}</div>
           </div>
-          <div class="dialogBody">${message}</div>
+          <div class="dialogBody">
+            <div>${safeMessage}</div>
+            ${needsText ? `
+              <div class="divider"></div>
+              <label class="dialogLabel" for="${reqId}">Type <span class="kbd">${escapeHtml(requireText)}</span> to confirm</label>
+              <input id="${reqId}" class="field" autocomplete="off" placeholder="${escapeHtml(requirePlaceholder)}" />
+            ` : ''}
+          </div>
           <div class="dialogActions">
-            <button class="btn btnGhost" value="cancel">${cancelText}</button>
-            <button class="btn ${tone === 'danger' ? 'btnDanger' : ''}" value="ok">${confirmText}</button>
+            <button class="btn btnGhost" value="cancel">${escapeHtml(cancelText)}</button>
+            <button id="dlgConfirmBtn" class="btn ${tone === 'danger' ? 'btnDanger' : ''}" value="ok">${escapeHtml(confirmText)}</button>
           </div>
         </form>
       `
     );
+
+    // If we require typed confirmation, disable the confirm button until it matches.
+    if (needsText) {
+      const input = dlg.querySelector(`#${reqId}`);
+      const btn = dlg.querySelector('#dlgConfirmBtn');
+      const expected = String(requireText);
+      const sync = () => {
+        const ok = String(input?.value ?? '') === expected;
+        if (btn) btn.disabled = !ok;
+      };
+      sync();
+      input?.addEventListener('input', sync);
+      setTimeout(() => input?.focus?.(), 0);
+    }
 
     dlg.addEventListener('close', onClose);
     try {
@@ -81,22 +112,22 @@ export function editSectionDialog({
       /* html */ `
         <form method="dialog" class="dialogCard">
           <div class="dialogHeader">
-            <div class="dialogTitle">${title}</div>
+            <div class="dialogTitle">${escapeHtml(title)}</div>
           </div>
 
           <div class="dialogBody">
             <label class="dialogLabel" for="dlgTitle">Title</label>
-            <input id="dlgTitle" class="field" autocomplete="off" value="${String(initialTitle).replace(/"/g, '&quot;')}" />
+            <input id="dlgTitle" class="field" autocomplete="off" value="${escapeHtml(String(initialTitle))}" />
 
             <div class="divider"></div>
 
             <label class="dialogLabel" for="dlgDesc">Description (optional)</label>
-            <textarea id="dlgDesc" class="field textarea" rows="3">${String(initialDesc || '')}</textarea>
+            <textarea id="dlgDesc" class="field textarea" rows="3">${escapeHtml(String(initialDesc || ''))}</textarea>
           </div>
 
           <div class="dialogActions">
-            <button class="btn btnGhost" value="cancel">${cancelText}</button>
-            <button class="btn" value="ok">${saveText}</button>
+            <button class="btn btnGhost" value="cancel">${escapeHtml(cancelText)}</button>
+            <button class="btn" value="ok">${escapeHtml(saveText)}</button>
           </div>
         </form>
       `

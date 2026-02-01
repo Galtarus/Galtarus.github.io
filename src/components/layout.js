@@ -11,6 +11,9 @@ export function Layout({ title = 'GALTARUS', currentPath = '#/' } = {}) {
             <div class="logo" aria-hidden="true"></div>
             <div class="title">${title}</div>
           </div>
+          <div class="toolbar" style="justify-content:flex-end">
+            <a class="iconBtn" href="#/settings" title="Settings" aria-label="Settings">${iconSvg('settings')}</a>
+          </div>
         </header>
 
         <main class="main" id="view" aria-live="polite"></main>

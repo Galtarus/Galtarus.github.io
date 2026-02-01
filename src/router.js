@@ -2,6 +2,7 @@ import { HomePage, bindHomeHandlers } from './pages/home.js';
 import { SectionsPage, bindSectionsHandlers, initSectionsState } from './pages/sections.js';
 import { SearchPage, bindSearchHandlers, initSearchState } from './pages/search.js';
 import { LegacyIdeasPage } from './pages/legacyIdeas.js';
+import { SettingsPage, bindSettingsHandlers, initSettingsState } from './pages/settings.js';
 import { SectionPage, bindSectionHandlers, initSectionState, SectionTitle } from './pages/section.js';
 
 const routes = {
@@ -27,6 +28,12 @@ const routes = {
     // legacy direct link; keep so old bookmarks don't break
     title: 'Vault',
     render: () => LegacyIdeasPage(),
+  },
+  '#/settings': {
+    title: 'Settings',
+    initState: initSettingsState,
+    render: (state) => SettingsPage(state),
+    bind: bindSettingsHandlers,
   },
 };
 

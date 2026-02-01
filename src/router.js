@@ -7,7 +7,8 @@ import { SectionPage, bindSectionHandlers, initSectionState, SectionTitle } from
 const routes = {
   '#/': {
     title: 'Hub',
-    render: () => HomePage(),
+    initState: initSectionsState,
+    render: (state) => HomePage(state),
   },
   '#/sections': {
     title: 'Sections',

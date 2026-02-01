@@ -3,9 +3,21 @@ import { Layout } from './components/layout.js';
 import { resolveRoute } from './router.js';
 
 const app = qs('#app');
-let state = { text: '', mode: 'goblin', ideas: null };
+let state = {
+  // idea vault
+  ideas: null,
+  ideasQuery: '',
+  // sections
+  sections: null,
+};
 
 function render() {
+  // Preserve focus (mobile keyboard should NOT close on each keystroke)
+  const active = document.activeElement;
+  const activeId = active && active.id ? active.id : null;
+  const selStart = typeof active?.selectionStart === 'number' ? active.selectionStart : null;
+  const selEnd = typeof active?.selectionEnd === 'number' ? active.selectionEnd : null;
+
   const hash = window.location.hash || '#/';
   const route = resolveRoute(hash);
 
@@ -15,7 +27,7 @@ function render() {
     state.__inited = { ...(state.__inited ?? {}), [hash]: true };
   }
 
-  setHTML(app, Layout({ title: 'GALTARUS • HUB', currentPath: hash }));
+  setHTML(app, Layout({ title: 'GALTARUS', currentPath: hash }));
 
   const view = qs('#view');
   setHTML(view, route.render(state));
@@ -25,6 +37,21 @@ function render() {
   }
 
   document.title = `GALTARUS • ${route.title}`;
+
+  // Restore focus
+  if (activeId) {
+    const nextEl = document.getElementById(activeId);
+    if (nextEl && typeof nextEl.focus === 'function') {
+      nextEl.focus({ preventScroll: true });
+      if (selStart !== null && selEnd !== null && typeof nextEl.setSelectionRange === 'function') {
+        try {
+          nextEl.setSelectionRange(selStart, selEnd);
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }
 }
 
 function setState(next) {

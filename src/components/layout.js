@@ -10,8 +10,12 @@ function TabIcon(kind) {
     return `<svg ${common} aria-hidden="true"><path d="M12 2l1.5 6.2L20 10l-6.5 1.8L12 18l-1.5-6.2L4 10l6.5-1.8L12 2z" /></svg>`;
   }
 
-  // wand
-  return `<svg ${common} aria-hidden="true"><path d="M4 20l10-10" /><path d="M14 10l6 6" /><path d="M12 4l2 2" /><path d="M8 6l2 2" /><path d="M16 6l2 2" /></svg>`;
+  if (kind === 'grid') {
+    return `<svg ${common} aria-hidden="true"><path d="M4 4h7v7H4z" /><path d="M13 4h7v7h-7z" /><path d="M4 13h7v7H4z" /><path d="M13 13h7v7h-7z" /></svg>`;
+  }
+
+  // default
+  return `<svg ${common} aria-hidden="true"><path d="M12 20h.01" /></svg>`;
 }
 
 export function Layout({ title = 'GALTARUS', currentPath = '#/' } = {}) {
@@ -31,8 +35,8 @@ export function Layout({ title = 'GALTARUS', currentPath = '#/' } = {}) {
 
         <nav class="tabs" aria-label="Navigation">
           <a href="#/" ${isCurrent('#/')}>${TabIcon('home')}<span class="label">Hub</span></a>
-          <a href="#/ideas" ${isCurrent('#/ideas')}>${TabIcon('spark')}<span class="label">Idées</span></a>
-          <a href="#/meme" ${isCurrent('#/meme')}>${TabIcon('wand')}<span class="label">Meme</span></a>
+          <a href="#/sections" ${isCurrent('#/sections')}>${TabIcon('grid')}<span class="label">Sections</span></a>
+          <a href="#/ideas" ${isCurrent('#/ideas')}>${TabIcon('spark')}<span class="label">Vault</span></a>
         </nav>
       </div>
     </div>

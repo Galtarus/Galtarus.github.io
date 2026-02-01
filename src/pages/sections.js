@@ -17,6 +17,8 @@ export function initSectionsState(state) {
     sections: loadSections(),
     sectionsQuery: String(state.sectionsQuery ?? ''),
     sectionsSort: String(state.sectionsSort ?? 'recent'),
+    importMode: state.importMode === 'replace' ? 'replace' : 'merge',
+    importStatus: state.importStatus ?? null, // { tone: 'ok'|'warn'|'danger', message: string }
   };
 }
 
@@ -110,6 +112,20 @@ export function SectionsPage(state) {
         <label class="btn btnGhost" for="importFile" style="cursor:pointer;">Import JSON</label>
         <input id="importFile" type="file" accept="application/json" style="display:none" />
       </div>
+
+      <div class="divider"></div>
+      <label class="small" style="display:flex; gap:10px; align-items:center; cursor:pointer; user-select:none;">
+        <input id="importReplace" type="checkbox" ${state.importMode === 'replace' ? 'checked' : ''} />
+        <span><b>Replace</b> (clear local data before import)</span>
+      </label>
+
+      ${state.importStatus ? `
+        <div class="divider"></div>
+        <div class="toolbar" style="justify-content:space-between; align-items:flex-start">
+          <span class="badge ${state.importStatus.tone === 'danger' ? 'badgeDanger' : state.importStatus.tone === 'warn' ? 'badgeWarn' : 'badgeOk'}">Import</span>
+          <div class="small" style="flex:1; margin-left:10px">${escapeHtml(state.importStatus.message)}</div>
+        </div>
+      ` : ''}
 
       <div class="divider"></div>
       <div class="small">Everything is stored locally (localStorage). Export/Import is your backup.</div>
@@ -307,13 +323,43 @@ export function bindSectionsHandlers({ root, state, onState }) {
     exportAll(state.sections ?? loadSections());
   });
 
+  root.querySelector('#importReplace')?.addEventListener('change', (e) => {
+    onState({ ...state, importMode: e.target.checked ? 'replace' : 'merge' });
+  });
+
   file?.addEventListener('change', async () => {
     const f = file.files?.[0];
     if (!f) return;
 
-    const res = await importAllFromFile(f);
+    const mode = state.importMode === 'replace' ? 'replace' : 'merge';
+    const res = await importAllFromFile(f, { mode });
+
     if (res.ok) {
-      onState({ ...state, sections: res.sections });
+      const s = res.summary;
+      const msg = mode === 'replace'
+        ? `Replaced local data. Imported ${s.sectionsImported} sections (${s.dataImported} with data).`
+        : `Merged ${s.sectionsImported} sections (${s.dataImported} with data).${s.sectionsRemapped ? ` Remapped ${s.sectionsRemapped} conflicting IDs.` : ''}`;
+
+      onState({
+        ...state,
+        sections: res.sections,
+        importStatus: {
+          tone: res.warnings?.length ? 'warn' : 'ok',
+          message: res.warnings?.length ? `${msg} ${res.warnings[0]}` : msg,
+        },
+      });
+    } else {
+      const message =
+        res.reason === 'invalid_json' ? 'Could not parse JSON.'
+          : res.reason === 'wrong_app' ? 'This file does not look like a Galtarus export.'
+            : res.reason === 'missing_sections' ? 'Invalid export: missing “sections”.'
+              : res.reason === 'no_sections' ? 'Import file contains no sections.'
+                : 'Import failed.';
+
+      onState({
+        ...state,
+        importStatus: { tone: 'danger', message },
+      });
     }
 
     // allow importing the same file again

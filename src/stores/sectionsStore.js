@@ -27,9 +27,11 @@ export function normalizeSections(list) {
     .map((s) => {
       const createdAt = Number.isFinite(s.createdAt) ? s.createdAt : Date.now();
       const updatedAt = Number.isFinite(s.updatedAt) ? s.updatedAt : createdAt;
+      const kind0 = String(s.kind || SECTION_KINDS.IDEA_VAULT);
+      const kind = Object.values(SECTION_KINDS).includes(kind0) ? kind0 : SECTION_KINDS.IDEA_VAULT;
       return {
         id: String(s.id || '').trim() || uid('sec'),
-        kind: String(s.kind || SECTION_KINDS.IDEA_VAULT),
+        kind,
         title: String(s.title || 'Untitled'),
         desc: String(s.desc || ''),
         createdAt,

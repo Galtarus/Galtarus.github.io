@@ -112,6 +112,17 @@ a { color: inherit; text-decoration: none; }
   min-width: 180px;
 }
 
+.fieldWrap .fieldIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
 .fieldWrap .field { padding-left: 36px; }
 
 .fieldWrap .clearBtn {
@@ -131,6 +142,24 @@ a { color: inherit; text-decoration: none; }
   background: rgba(255,255,255,0.04);
   color: var(--muted);
   font-size: 12px;
+}
+
+.badgeOk {
+  border-color: rgba(77, 221, 153, 0.35);
+  background: rgba(77, 221, 153, 0.08);
+  color: rgba(184, 255, 224, 0.95);
+}
+
+.badgeWarn {
+  border-color: rgba(255, 205, 77, 0.35);
+  background: rgba(255, 205, 77, 0.08);
+  color: rgba(255, 235, 190, 0.95);
+}
+
+.badgeDanger {
+  border-color: rgba(255, 99, 132, 0.35);
+  background: rgba(255, 99, 132, 0.08);
+  color: rgba(255, 205, 214, 0.95);
 }
 
 .list {

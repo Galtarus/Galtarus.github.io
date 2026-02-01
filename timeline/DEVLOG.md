@@ -37,3 +37,13 @@ Next: implement real browse UI + stronger entry details.
 
 What to review:
 - Create/edit an entry, set an `https://…` image URL, ensure it shows on the entry detail page.
+
+## Cycle 6 — import/export + reset (vertical slice)
+
+- Added JSON export/import and “Reset to demo” controls on the About page.
+- Import validates basic shape and replaces local data.
+
+What to review:
+- Go to About → Export JSON.
+- Modify/delete some entries → About → Reset to demo.
+- About → Import JSON (use the exported file) and confirm it restores your data.

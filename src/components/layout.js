@@ -7,13 +7,10 @@ export function Layout({ title = 'GALTARUS', currentPath = '#/' } = {}) {
         <header class="header">
           <div class="brand">
             <div class="logo" aria-hidden="true"></div>
-            <div>
-              <div style="font-weight: 650; letter-spacing: 0.4px; text-transform: uppercase;">${title}</div>
-              <div class="small">static • no network • just tabs</div>
-            </div>
+            <div style="font-weight: 750; letter-spacing: 0.6px; text-transform: uppercase;">${title}</div>
           </div>
           <nav class="nav" aria-label="Navigation">
-            <a href="#/" ${isCurrent('#/')}>Accueil</a>
+            <a href="#/" ${isCurrent('#/')}>Hub</a>
             <a href="#/ideas" ${isCurrent('#/ideas')}>Idées</a>
             <a href="#/meme" ${isCurrent('#/meme')}>Meme</a>
           </nav>

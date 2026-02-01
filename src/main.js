@@ -3,23 +3,22 @@ import { Layout } from './components/layout.js';
 import { resolveRoute } from './router.js';
 
 const app = qs('#app');
-let state = { labText: '' };
+let state = { text: '', mode: 'goblin' };
 
 function render() {
   const hash = window.location.hash || '#/';
   const route = resolveRoute(hash);
 
-  setHTML(app, Layout({ title: 'SPA Starter', currentPath: hash }));
+  setHTML(app, Layout({ title: 'GALTARUS • MEME BOX', currentPath: hash }));
 
   const view = qs('#view');
   setHTML(view, route.render(state));
 
-  // page-specific handlers
   if (route.bind) {
     route.bind({ root: app, state, onState: setState });
   }
 
-  document.title = `SPA Starter • ${route.title}`;
+  document.title = `GALTARUS • ${route.title}`;
 }
 
 function setState(next) {

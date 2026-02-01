@@ -1,9 +1,9 @@
 import { escapeHtml } from '../lib/dom.js';
 import { uid } from '../lib/id.js';
-import { confirmDialog } from '../lib/dialogs.js';
+import { confirmDialog, editSectionDialog } from '../lib/dialogs.js';
 import { iconSvg } from '../components/icons.js';
-import { loadSectionData, saveSectionData } from '../stores/sectionDataStore.js';
-import { touchSection } from '../stores/sectionsStore.js';
+import { loadSectionData, saveSectionData, deleteSectionData } from '../stores/sectionDataStore.js';
+import { touchSection, updateSectionMeta, deleteSection, getSectionById } from '../stores/sectionsStore.js';
 
 function normalizeItems(list) {
   if (!Array.isArray(list)) return [];
@@ -81,7 +81,11 @@ export function ChecklistPage(state) {
         <div class="h1">${escapeHtml(section.title || 'Checklist')}</div>
         <div class="small">${doneCount}/${items.length} done</div>
       </div>
-      <a class="btn btnGhost" href="#/sections">${iconSvg('arrowLeft')} Sections</a>
+      <div class="toolbar" style="justify-content:flex-end">
+        <button class="iconBtn" type="button" data-action="section:edit" title="Edit section" aria-label="Edit section">${iconSvg('edit')}</button>
+        <button class="iconBtn" type="button" data-action="section:delete" title="Delete section" aria-label="Delete section">${iconSvg('trash')}</button>
+        <a class="btn btnGhost" href="#/sections">${iconSvg('arrowLeft')} Sections</a>
+      </div>
     </div>
 
     <div class="panel">
@@ -153,6 +157,35 @@ export function bindChecklistHandlers({ root, state, onState }) {
       __data: { ...(state.__data ?? {}), [sid]: { items: nextItems } },
     });
   };
+
+  root.querySelector('[data-action="section:edit"]')?.addEventListener('click', async () => {
+    const res = await editSectionDialog({
+      title: 'Edit section',
+      initialTitle: section.title,
+      initialDesc: section.desc,
+    });
+    if (!res || !res.title) return;
+
+    const nextSections = updateSectionMeta(sid, { title: res.title, desc: res.desc }, state.sections);
+    const nextSection = getSectionById(nextSections, sid);
+    onState({ ...state, sections: nextSections, __section: nextSection ?? section });
+  });
+
+  root.querySelector('[data-action="section:delete"]')?.addEventListener('click', async () => {
+    const ok = await confirmDialog({
+      title: 'Delete section?',
+      message: 'This will delete the section and its local data on this device.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!ok) return;
+
+    deleteSectionData(section.id, section.kind);
+    const nextSections = deleteSection(section.id, state.sections);
+    onState({ ...state, sections: nextSections, __section: null });
+    window.location.hash = '#/sections';
+  });
 
   const add = () => {
     const t = (field?.value ?? '').trim();

@@ -1,3 +1,4 @@
+import { escapeHtml } from '../lib/dom.js';
 import { confirmDialog } from '../lib/dialogs.js';
 import { exportAll, importAllFromFile, resetAllData } from '../lib/appData.js';
 import { iconSvg } from '../components/icons.js';
@@ -19,7 +20,7 @@ function statusHtml(status) {
     <div class="divider"></div>
     <div class="toolbar" style="justify-content:space-between; align-items:flex-start">
       <span class="badge ${toneClass}">Import</span>
-      <div class="small" style="flex:1; margin-left:10px">${status.message}</div>
+      <div class="small" style="flex:1; margin-left:10px">${escapeHtml(status.message)}</div>
     </div>
   `;
 }

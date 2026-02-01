@@ -1,7 +1,7 @@
 import { escapeHtml } from '../lib/dom.js';
-import { loadSections } from '../stores/sectionsStore.js';
+import { loadSections, SECTION_KINDS } from '../stores/sectionsStore.js';
 import { loadSectionData } from '../stores/sectionDataStore.js';
-import { iconSvg } from '../components/icons.js';
+import { iconSvg, kindIconSvg } from '../components/icons.js';
 
 export function initSearchState(state) {
   return {
@@ -9,6 +9,13 @@ export function initSearchState(state) {
     sections: Array.isArray(state.sections) ? state.sections : loadSections(),
     searchQuery: String(state.searchQuery ?? ''),
   };
+}
+
+function kindLabel(kind) {
+  if (kind === SECTION_KINDS.IDEA_VAULT) return 'Ideas';
+  if (kind === SECTION_KINDS.CHECKLIST) return 'Checklist';
+  if (kind === SECTION_KINDS.NOTES) return 'Notes';
+  return String(kind || 'Section');
 }
 
 function toTerms(q0) {
@@ -129,9 +136,9 @@ export function SearchPage(state) {
           <li class="item">
             <div>
               <div class="toolbar" style="gap:8px; align-items:center; margin-bottom:4px">
-                <div class="itemTitle" style="margin:0">${escapeHtml(r.section.title || 'Untitled')}</div>
-                <span class="badge">${escapeHtml(r.section.kind || '')}</span>
-                ${r.where === 'content' ? `<span class="badge">match in content</span>` : ''}
+                <div class="itemTitle" style="margin:0"><span class="kindIcon">${kindIconSvg(r.section.kind)}</span> ${escapeHtml(r.section.title || 'Untitled')}</div>
+                <span class="badge">${escapeHtml(kindLabel(r.section.kind))}</span>
+                ${r.where === 'content' ? `<span class="badge">Match in content</span>` : ''}
               </div>
               ${r.note ? `<div class="itemNote">${escapeHtml(r.note)}</div>` : ''}
             </div>

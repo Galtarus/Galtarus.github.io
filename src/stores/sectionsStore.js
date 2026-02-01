@@ -9,12 +9,13 @@ export const SECTION_KINDS = {
   NOTES: 'notes',
 };
 
+// Keep a single lightweight demo section so first-run doesn't look empty.
 const DEFAULT_SECTIONS = [
   {
-    id: 'starwars',
+    id: 'demo-ideas',
     kind: SECTION_KINDS.IDEA_VAULT,
-    title: 'Star Wars - Pitch Vault',
-    desc: 'Idees de films, twists, scenes, themes.',
+    title: 'Demo - Ideas',
+    desc: 'A tiny idea vault to show the format. You can delete it anytime.',
     createdAt: Date.now(),
     updatedAt: Date.now(),
   },

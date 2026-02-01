@@ -19,9 +19,10 @@ export function Layout({ title = 'GALTARUS', currentPath = '#/' } = {}) {
         <main class="main" id="view" aria-live="polite"></main>
 
         <nav class="tabs" aria-label="Navigation">
-          <a href="#/" ${isCurrent('#/')}>${iconSvg('home')}<span class="label">Hub</span></a>
+          <a href="#/" ${isCurrent('#/')}>${iconSvg('home')}<span class="label">Home</span></a>
           <a href="#/sections" ${isCurrent('#/sections')}>${iconSvg('grid')}<span class="label">Sections</span></a>
           <a href="#/search" ${isCurrent('#/search')}>${iconSvg('search')}<span class="label">Search</span></a>
+          <a href="#/settings" ${isCurrent('#/settings')}>${iconSvg('settings')}<span class="label">Settings</span></a>
         </nav>
 
         <dialog id="appDialog" class="dialog" aria-label="Dialog"></dialog>

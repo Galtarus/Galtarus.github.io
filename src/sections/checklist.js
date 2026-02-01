@@ -222,8 +222,11 @@ export function bindChecklistHandlers({ root, state, onState }) {
   root.querySelectorAll('[data-del]')?.forEach((btn) => {
     btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-del');
+      const current = getItems(state, sid).find((it) => it.id === id);
+      const display = String(current?.text || '').trim().slice(0, 80) || 'this item';
+
       const ok = await confirmDialog({
-        title: 'Delete item?',
+        title: `Delete “${display}”?`,
         message: 'This cannot be undone.',
         confirmText: 'Delete',
         cancelText: 'Cancel',

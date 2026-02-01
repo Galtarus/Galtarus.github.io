@@ -28,8 +28,11 @@ export function SectionPage(state) {
   if (!section) {
     return /* html */ `
       <h1 class="h1">Section not found</h1>
-      <p class="p">This section does not exist (or was deleted).</p>
-      <a class="btn" href="#/sections">Back to sections</a>
+      <p class="p">This section does not exist (or was deleted). It might also be missing after an import/reset.</p>
+      <div class="row">
+        <a class="btn" href="#/sections">Browse sections</a>
+        <a class="btn btnGhost" href="#/">Home</a>
+      </div>
     `;
   }
 

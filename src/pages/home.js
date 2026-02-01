@@ -33,8 +33,8 @@ export function HomePage(state) {
   return /* html */ `
     <div class="pageHeader">
       <div>
-        <h1 class="h1" style="margin:0 0 6px">Hub</h1>
-        <div class="small">Your offline home for notes, checklists, and idea vaults.</div>
+        <h1 class="h1" style="margin:0 0 6px">Home</h1>
+        <div class="small">Your offline place for notes, checklists, and idea vaults.</div>
       </div>
       <div class="toolbar" style="justify-content:flex-end">
         <a class="btn btnGhost" href="#/settings">${iconSvg('settings')} Settings</a>

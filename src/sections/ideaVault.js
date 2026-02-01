@@ -254,8 +254,11 @@ export function bindIdeaVaultHandlers({ root, state, onState }) {
   root.querySelectorAll('[data-del]')?.forEach((btn) => {
     btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-del');
+      const current = getItems(state, sid).find((it) => it.id === id);
+      const display = String(current?.title || 'Untitled').slice(0, 80);
+
       const ok = await confirmDialog({
-        title: 'Delete idea?',
+        title: `Delete “${display}”?`,
         message: 'This cannot be undone.',
         confirmText: 'Delete',
         cancelText: 'Cancel',

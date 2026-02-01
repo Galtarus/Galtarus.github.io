@@ -2,27 +2,41 @@ import { el, mount, formatDate } from '../lib/ui.js';
 import { ytEmbed } from './yt.js';
 
 export function viewEntry({ root, store, navigate, id }) {
-  const entry = store.entries.find((e) => e.id === id);
+  const entries = store.entries
+    .slice()
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  const idx = entries.findIndex((e) => e.id === id);
+  const entry = idx >= 0 ? entries[idx] : null;
+  const prev = idx > 0 ? entries[idx - 1] : null;
+  const next = idx >= 0 && idx < entries.length - 1 ? entries[idx + 1] : null;
 
   const left = el('section', { class: 'panel' },
-    el('h2', {}, 'Timeline'),
+    el('h2', {}, 'Entry'),
     el('div', { class: 'timeline' },
       el('div', { class: 'row wrap' },
-        el('button', { class: 'btn', type: 'button', onclick: () => navigate('/') }, '← Back'),
-        el('button', { class: 'btn primary', type: 'button', onclick: () => navigate(`/edit/${id}`) }, 'Edit')
+        el('button', { class: 'btn', type: 'button', onclick: () => navigate('/') }, '← Timeline'),
+        entry ? el('button', { class: 'btn', type: 'button', onclick: () => navigate(`/edit/${id}`) }, 'Edit') : null
       ),
       el('div', { class: 'hr' }),
+      entry ? entryDetail(entry) : el('div', { class: 'panel-body' }, el('p', { class: 'muted' }, 'Entry not found.')),
       entry
-        ? entryDetail(entry)
-        : el('div', { class: 'panel-body' }, el('p', { class: 'muted' }, 'Entry not found.'))
+        ? el('div', { class: 'panel-body' },
+            el('div', { class: 'row wrap' },
+              prev ? el('button', { class: 'btn', type: 'button', onclick: () => navigate(`/entry/${prev.id}`) }, '← Previous') : null,
+              next ? el('button', { class: 'btn', type: 'button', onclick: () => navigate(`/entry/${next.id}`) }, 'Next →') : null
+            )
+          )
+        : null
     )
   );
 
   const right = el('aside', { class: 'panel right-panel' },
-    el('h2', {}, 'Notes'),
+    el('h2', {}, 'Actions'),
     el('div', { class: 'panel-body stack' },
-      el('p', { class: 'muted' }, 'Cycle 2+ will refine browse UI and details.'),
-      el('p', { class: 'muted' }, 'YouTube embeds use youtube-nocookie and load on click.')
+      el('button', { class: 'btn primary', type: 'button', onclick: () => navigate('/edit/new') }, 'Add entry'),
+      el('button', { class: 'btn', type: 'button', onclick: () => navigate('/') }, 'Back to timeline'),
+      el('p', { class: 'muted' }, 'Tip: YouTube embeds load only after clicking “Load video”.')
     )
   );
 

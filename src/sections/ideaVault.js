@@ -1,18 +1,22 @@
 import { escapeHtml } from '../lib/dom.js';
 import { uid } from '../lib/id.js';
+import { confirmDialog } from '../lib/dialogs.js';
+import { iconSvg } from '../components/icons.js';
 import { loadSectionData, saveSectionData } from '../stores/sectionDataStore.js';
+import { touchSection } from '../stores/sectionsStore.js';
 
 const SEED = [
   {
     id: 'seed_jedi_protocol',
-    title: 'Les Jedi sont un protocole, pas une religion',
-    note: 'Une école Jedi open-source: plusieurs interprétations du Code, débats publics, et un “Conseil” qui ressemble plus à une revue scientifique qu’à une aristocratie.',
+    title: 'The Jedi are a protocol, not a religion',
+    note:
+      'An open-source Jedi school: multiple interpretations of the Code, public debates, and a "Council" that looks more like peer review than aristocracy.',
     createdAt: Date.now() - 1000 * 60 * 60 * 24 * 2,
   },
   {
     id: 'seed_detective',
-    title: 'Un film Star Wars en mode thriller d’enquête',
-    note: 'Pas de super-weapon. Un meurtre impossible sur une station neutre. Un droïde détective + une ex‑Inquisitrice en cavale.',
+    title: 'Star Wars as a detective thriller',
+    note: 'No super-weapon. An impossible murder on a neutral station. A detective droid + a former Inquisitor on the run.',
     createdAt: Date.now() - 1000 * 60 * 60 * 24,
   },
 ];
@@ -97,29 +101,29 @@ export function IdeaVaultPage(state) {
         <div class="h1">${escapeHtml(section.title || 'Idea Vault')}</div>
         ${section.desc ? `<div class="small">${escapeHtml(section.desc)}</div>` : ''}
       </div>
-      <a class="btn" href="#/sections">← Sections</a>
+      <a class="btn btnGhost" href="#/sections">${iconSvg('arrowLeft')} Sections</a>
     </div>
 
     <div class="panel">
       <div class="toolbar">
-        <input id="${searchId}" class="field" placeholder="Rechercher…" value="${escapeHtml(view.query)}" />
+        <input id="${searchId}" class="field" placeholder="Search" value="${escapeHtml(view.query)}" />
         <select id="${sortId}" class="field select" aria-label="Sort">
-          <option value="newest" ${view.sort === 'newest' ? 'selected' : ''}>Nouveaux</option>
-          <option value="oldest" ${view.sort === 'oldest' ? 'selected' : ''}>Anciens</option>
-          <option value="title" ${view.sort === 'title' ? 'selected' : ''}>Titre</option>
+          <option value="newest" ${view.sort === 'newest' ? 'selected' : ''}>Newest</option>
+          <option value="oldest" ${view.sort === 'oldest' ? 'selected' : ''}>Oldest</option>
+          <option value="title" ${view.sort === 'title' ? 'selected' : ''}>Title</option>
         </select>
         <span class="badge">${sorted.length}/${items.length}</span>
       </div>
 
       <div class="divider"></div>
-      <input id="${titleId}" class="field" placeholder="Titre" autocomplete="off" />
+      <input id="${titleId}" class="field" placeholder="Title" autocomplete="off" />
       <div class="divider"></div>
-      <textarea id="${noteId}" class="field textarea" rows="3" placeholder="Note (pitch, twist, scène, etc.)"></textarea>
+      <textarea id="${noteId}" class="field textarea" rows="3" placeholder="Note (pitch, twist, scene, etc.)"></textarea>
 
       <div class="divider"></div>
       <div class="toolbar">
-        <button class="btn" data-action="idea:add" type="button">Ajouter</button>
-        <button class="btn btnGhost" data-action="idea:seed" type="button">Seed</button>
+        <button class="btn" data-action="idea:add" type="button">${iconSvg('plus')} Add</button>
+        <button class="btn btnGhost" data-action="idea:seed" type="button">${iconSvg('spark')} Seed</button>
       </div>
     </div>
 
@@ -134,14 +138,15 @@ export function IdeaVaultPage(state) {
             <div class="itemTitle">${escapeHtml(it.title || 'Untitled')}</div>
             ${it.note ? `<div class="itemNote">${escapeHtml(it.note)}</div>` : ''}
           </div>
-          <button class="iconBtn" type="button" data-del="${escapeHtml(it.id)}" title="Delete" aria-label="Delete">✕</button>
+          <button class="iconBtn" type="button" data-del="${escapeHtml(it.id)}" title="Delete" aria-label="Delete">${iconSvg('trash')}</button>
         </li>
       `
         )
         .join('')}
     </ul>
 
-    ${sorted.length === 0 ? `<div class="divider"></div><div class="small">Aucun résultat.</div>` : ''}
+    ${items.length === 0 ? `<div class="divider"></div><div class="empty"><div class="emptyTitle">No ideas yet</div><div class="small">Add your first idea above (or use Seed).</div></div>` : ''}
+    ${sorted.length === 0 && items.length > 0 ? `<div class="divider"></div><div class="small">No results.</div>` : ''}
   `;
 }
 
@@ -170,8 +175,10 @@ export function bindIdeaVaultHandlers({ root, state, onState }) {
 
   const persist = (nextItems) => {
     saveSectionData(sid, section.kind, { items: nextItems });
+    const nextSections = touchSection(sid, state.sections);
     onState({
       ...state,
+      sections: nextSections,
       __data: { ...(state.__data ?? {}), [sid]: { items: nextItems } },
     });
   };
@@ -179,7 +186,10 @@ export function bindIdeaVaultHandlers({ root, state, onState }) {
   const add = () => {
     const t = (title?.value ?? '').trim();
     const n = (note?.value ?? '').trim();
-    if (!t) return;
+    if (!t) {
+      title?.focus({ preventScroll: true });
+      return;
+    }
 
     const nextItems = [{ id: uid('idea'), title: t, note: n, createdAt: Date.now() }, ...getItems(state, sid)];
     persist(nextItems);
@@ -201,8 +211,17 @@ export function bindIdeaVaultHandlers({ root, state, onState }) {
   });
 
   root.querySelectorAll('[data-del]')?.forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-del');
+      const ok = await confirmDialog({
+        title: 'Delete idea?',
+        message: 'This cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        tone: 'danger',
+      });
+      if (!ok) return;
+
       const nextItems = getItems(state, sid).filter((it) => it.id !== id);
       persist(nextItems);
     });

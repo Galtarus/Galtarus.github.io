@@ -1,5 +1,7 @@
 import { escapeHtml } from '../lib/dom.js';
+import { iconSvg } from '../components/icons.js';
 import { loadSectionData, saveSectionData } from '../stores/sectionDataStore.js';
+import { touchSection } from '../stores/sectionsStore.js';
 
 export function initNotesState(state, { section }) {
   const saved = loadSectionData(section.id, section.kind);
@@ -37,7 +39,7 @@ export function NotesPage(state) {
   const text = getText(state, sid);
   const q = view.query.trim().toLowerCase();
 
-  const matches = q ? text.toLowerCase().includes(q) : true;
+  const matches = q ? text.toLowerCase().includes(q) : null;
   const noteId = `notesText_${sid}`;
   const searchId = `notesSearch_${sid}`;
 
@@ -45,20 +47,20 @@ export function NotesPage(state) {
     <div class="pageHeader">
       <div>
         <div class="h1">${escapeHtml(section.title || 'Notes')}</div>
-        <div class="small">Offline notes • autosave</div>
+        <div class="small">Offline notes - autosave</div>
       </div>
-      <a class="btn" href="#/sections">← Sections</a>
+      <a class="btn btnGhost" href="#/sections">${iconSvg('arrowLeft')} Sections</a>
     </div>
 
     <div class="panel">
       <div class="toolbar">
-        <input id="${searchId}" class="field" placeholder="Rechercher dans la note…" value="${escapeHtml(view.query)}" />
-        <span class="badge">${q ? (matches ? 'match' : 'no match') : '—'}</span>
+        <input id="${searchId}" class="field" placeholder="Search in note" value="${escapeHtml(view.query)}" />
+        <span class="badge">${matches === null ? '—' : matches ? 'match' : 'no match'}</span>
       </div>
       <div class="divider"></div>
-      <textarea id="${noteId}" class="field textarea notesArea" rows="12" placeholder="Écris ici…">${escapeHtml(text)}</textarea>
+      <textarea id="${noteId}" class="field textarea notesArea" rows="12" placeholder="Write here...">${escapeHtml(text)}</textarea>
       <div class="divider"></div>
-      <div class="small">Astuce: sur mobile, le focus est préservé (le clavier ne doit pas se fermer à chaque frappe).</div>
+      <div class="small">Tip: focus is preserved on mobile (the keyboard should not close on each keystroke).</div>
     </div>
   `;
 }
@@ -94,7 +96,13 @@ export function bindNotesHandlers({ root, state, onState }) {
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       saveSectionData(sid, section.kind, { text, updatedAt: Date.now() });
+      const nextSections = touchSection(sid, state.sections);
+      onState({
+        ...state,
+        sections: nextSections,
+        __data: { ...(state.__data ?? {}), [sid]: { text } },
+      });
       saveTimer = null;
-    }, 220);
+    }, 250);
   });
 }

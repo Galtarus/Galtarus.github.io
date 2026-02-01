@@ -1,15 +1,15 @@
 import { qs, setHTML } from './lib/dom.js';
 import { Layout } from './components/layout.js';
-import { resolveRoute } from './router.js';
+import { resolveRoute, routeKey } from './router.js';
 
 const app = qs('#app');
 let state = {
-  // idea vault
-  ideas: null,
-  ideasQuery: '',
   // sections
   sections: null,
 };
+
+let lastRouteKey = null;
+const scrollByRoute = {};
 
 function render() {
   // Preserve focus (mobile keyboard should NOT close on each keystroke)
@@ -18,19 +18,22 @@ function render() {
   const selStart = typeof active?.selectionStart === 'number' ? active.selectionStart : null;
   const selEnd = typeof active?.selectionEnd === 'number' ? active.selectionEnd : null;
 
-  // Preserve scroll position across re-renders (especially mobile keyboard)
-  const scrollY = window.scrollY;
-
   const hash = window.location.hash || '#/';
+  const key = routeKey(hash);
   const route = resolveRoute(hash);
 
-  // allow pages to initialize state (e.g. load localStorage)
-  if (route.initState && !state.__inited?.[hash]) {
-    state = route.initState(state);
-    state.__inited = { ...(state.__inited ?? {}), [hash]: true };
+  // Store scroll per route, restore only when re-rendering same route
+  if (lastRouteKey) {
+    scrollByRoute[lastRouteKey] = window.scrollY;
   }
 
-  setHTML(app, Layout({ title: 'GALTARUS', currentPath: hash }));
+  // allow pages to initialize state (e.g. load localStorage)
+  if (route.initState && !state.__inited?.[key]) {
+    state = route.initState(state);
+    state.__inited = { ...(state.__inited ?? {}), [key]: true };
+  }
+
+  setHTML(app, Layout({ title: 'GALTARUS', currentPath: key }));
 
   const view = qs('#view');
   setHTML(view, route.render(state));
@@ -40,7 +43,7 @@ function render() {
   }
 
   const t = route.titleFromState ? route.titleFromState(state) : route.title;
-  document.title = `GALTARUS • ${String(t).replace(/<[^>]+>/g, '')}`;
+  document.title = `GALTARUS - ${String(t).replace(/<[^>]+>/g, '')}`;
 
   // Restore focus
   if (activeId) {
@@ -57,10 +60,11 @@ function render() {
     }
   }
 
-  // Restore scroll (best-effort)
-  if (Number.isFinite(scrollY)) {
-    window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' });
-  }
+  // Restore scroll
+  const nextScroll = key === lastRouteKey ? scrollByRoute[key] : 0;
+  window.scrollTo({ top: Number.isFinite(nextScroll) ? nextScroll : 0, left: 0, behavior: 'auto' });
+
+  lastRouteKey = key;
 }
 
 function setState(next) {

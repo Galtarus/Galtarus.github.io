@@ -27,9 +27,9 @@ export function SectionPage(state) {
 
   if (!section) {
     return /* html */ `
-      <h1 class="h1">Section introuvable</h1>
-      <p class="p">Cette section n'existe pas (ou a été supprimée).</p>
-      <a class="btn" href="#/sections">Retour aux sections</a>
+      <h1 class="h1">Section not found</h1>
+      <p class="p">This section does not exist (or was deleted).</p>
+      <a class="btn" href="#/sections">Back to sections</a>
     `;
   }
 
@@ -51,7 +51,7 @@ export function SectionTitle(state) {
   const section = state.__section;
   if (!section) return 'Section';
 
-  if (section.kind === SECTION_KINDS.CHECKLIST) return `Checklist • ${escapeHtml(section.title)}`;
-  if (section.kind === SECTION_KINDS.NOTES) return `Notes • ${escapeHtml(section.title)}`;
-  return `Idea Vault • ${escapeHtml(section.title)}`;
+  if (section.kind === SECTION_KINDS.CHECKLIST) return `Checklist - ${escapeHtml(section.title)}`;
+  if (section.kind === SECTION_KINDS.NOTES) return `Notes - ${escapeHtml(section.title)}`;
+  return `Idea Vault - ${escapeHtml(section.title)}`;
 }

@@ -1,6 +1,9 @@
 import { escapeHtml } from '../lib/dom.js';
 import { uid } from '../lib/id.js';
+import { confirmDialog } from '../lib/dialogs.js';
+import { iconSvg } from '../components/icons.js';
 import { loadSectionData, saveSectionData } from '../stores/sectionDataStore.js';
+import { touchSection } from '../stores/sectionsStore.js';
 
 function normalizeItems(list) {
   if (!Array.isArray(list)) return [];
@@ -78,24 +81,24 @@ export function ChecklistPage(state) {
         <div class="h1">${escapeHtml(section.title || 'Checklist')}</div>
         <div class="small">${doneCount}/${items.length} done</div>
       </div>
-      <a class="btn" href="#/sections">← Sections</a>
+      <a class="btn btnGhost" href="#/sections">${iconSvg('arrowLeft')} Sections</a>
     </div>
 
     <div class="panel">
       <div class="toolbar">
-        <input id="${searchId}" class="field" placeholder="Rechercher…" value="${escapeHtml(view.query)}" />
+        <input id="${searchId}" class="field" placeholder="Search" value="${escapeHtml(view.query)}" />
         <select id="${sortId}" class="field select" aria-label="Sort">
-          <option value="todoFirst" ${view.sort === 'todoFirst' ? 'selected' : ''}>À faire d'abord</option>
-          <option value="created" ${view.sort === 'created' ? 'selected' : ''}>Récents</option>
-          <option value="text" ${view.sort === 'text' ? 'selected' : ''}>Texte</option>
+          <option value="todoFirst" ${view.sort === 'todoFirst' ? 'selected' : ''}>Todo first</option>
+          <option value="created" ${view.sort === 'created' ? 'selected' : ''}>Newest</option>
+          <option value="text" ${view.sort === 'text' ? 'selected' : ''}>Text</option>
         </select>
         <span class="badge">${sorted.length}/${items.length}</span>
       </div>
 
       <div class="divider"></div>
       <div class="toolbar">
-        <input id="${newId}" class="field" placeholder="Nouvel item…" autocomplete="off" />
-        <button class="btn" data-action="ck:add" type="button">Ajouter</button>
+        <input id="${newId}" class="field" placeholder="New item" autocomplete="off" />
+        <button class="btn" data-action="ck:add" type="button">${iconSvg('plus')} Add</button>
       </div>
     </div>
 
@@ -110,14 +113,15 @@ export function ChecklistPage(state) {
             <input type="checkbox" data-ck-toggle="${escapeHtml(it.id)}" ${it.done ? 'checked' : ''} />
             <span class="ckText ${it.done ? 'ckDone' : ''}">${escapeHtml(it.text || '')}</span>
           </label>
-          <button class="iconBtn" type="button" data-del="${escapeHtml(it.id)}" title="Delete" aria-label="Delete">✕</button>
+          <button class="iconBtn" type="button" data-del="${escapeHtml(it.id)}" title="Delete" aria-label="Delete">${iconSvg('trash')}</button>
         </li>
       `
         )
         .join('')}
     </ul>
 
-    ${sorted.length === 0 ? `<div class="divider"></div><div class="small">Aucun résultat.</div>` : ''}
+    ${items.length === 0 ? `<div class="divider"></div><div class="empty"><div class="emptyTitle">No items yet</div><div class="small">Add your first checklist item above.</div></div>` : ''}
+    ${sorted.length === 0 && items.length > 0 ? `<div class="divider"></div><div class="small">No results.</div>` : ''}
   `;
 }
 
@@ -142,15 +146,20 @@ export function bindChecklistHandlers({ root, state, onState }) {
 
   const persist = (nextItems) => {
     saveSectionData(sid, section.kind, { items: nextItems });
+    const nextSections = touchSection(sid, state.sections);
     onState({
       ...state,
+      sections: nextSections,
       __data: { ...(state.__data ?? {}), [sid]: { items: nextItems } },
     });
   };
 
   const add = () => {
     const t = (field?.value ?? '').trim();
-    if (!t) return;
+    if (!t) {
+      field?.focus({ preventScroll: true });
+      return;
+    }
 
     persist([{ id: uid('ck'), text: t, done: false, createdAt: Date.now() }, ...getItems(state, sid)]);
     if (field) field.value = '';
@@ -171,8 +180,16 @@ export function bindChecklistHandlers({ root, state, onState }) {
   });
 
   root.querySelectorAll('[data-del]')?.forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-del');
+      const ok = await confirmDialog({
+        title: 'Delete item?',
+        message: 'This cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        tone: 'danger',
+      });
+      if (!ok) return;
       persist(getItems(state, sid).filter((it) => it.id !== id));
     });
   });

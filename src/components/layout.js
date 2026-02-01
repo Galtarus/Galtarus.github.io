@@ -1,4 +1,4 @@
-export function Layout({ title = 'GALTARUS • HUB', currentPath = '#/' } = {}) {
+export function Layout({ title = 'GALTARUS', currentPath = '#/' } = {}) {
   const isCurrent = (p) => (p === currentPath ? 'aria-current="page"' : '');
 
   return /* html */ `
@@ -9,7 +9,7 @@ export function Layout({ title = 'GALTARUS • HUB', currentPath = '#/' } = {}) 
             <div class="logo" aria-hidden="true"></div>
             <div>
               <div style="font-weight: 650; letter-spacing: 0.4px; text-transform: uppercase;">${title}</div>
-              <div class="small">onglets utiles + fun. push = redeploy.</div>
+              <div class="small">static • no network • just tabs</div>
             </div>
           </div>
           <nav class="nav" aria-label="Navigation">
@@ -19,10 +19,6 @@ export function Layout({ title = 'GALTARUS • HUB', currentPath = '#/' } = {}) 
           </nav>
         </header>
         <main class="main" id="view" aria-live="polite"></main>
-        <footer class="footer">
-          <span>GitHub Pages • gratuit</span>
-          <span style="float:right">cache? <span class="kbd">Ctrl</span>+<span class="kbd">F5</span></span>
-        </footer>
       </div>
     </div>
   `;

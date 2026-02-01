@@ -48,7 +48,7 @@ export function IdeasPage(state) {
 
   return /* html */ `
     <h1 class="h1">Idées Star Wars</h1>
-    <p class="p">Une petite “vault” d’idées: utile, navigable, et tu peux en ajouter. (Sauvegarde en local dans ton navigateur.)</p>
+    <div class="small">sauvegardé dans ton navigateur (localStorage)</div>
 
     <div class="card" style="padding:14px; border-radius: 12px; background: rgba(0,0,0,0.25);">
       <div class="small">Ajouter une idée</div>

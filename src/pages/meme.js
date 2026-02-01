@@ -42,7 +42,7 @@ export function MemePage(state) {
 
   return /* html */ `
     <h1 class="h1">Meme Box</h1>
-    <p class="p">Tape → clique → copie. Rien de plus.</p>
+    <div class="small">tape → clique → copie</div>
 
     <div class="card" style="padding:14px; border-radius: 12px; background: rgba(0,0,0,0.25);">
       <input id="memeInput" value="${escapeHtml(input)}" placeholder="ex: le café me juge" 

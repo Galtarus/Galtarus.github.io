@@ -3,7 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>SPA Starter</title>
+
+    <!-- Hard rule: this is a static site. No calling the agent, no network. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'none'; object-src 'none'; connect-src 'none'; img-src 'self' data:; media-src 'self'; frame-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    />
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()" />
+
+    <title>GALTARUS • HUB</title>
     <link rel="stylesheet" href="./src/styles/main.css" />
   </head>
   <body>

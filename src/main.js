@@ -18,6 +18,9 @@ function render() {
   const selStart = typeof active?.selectionStart === 'number' ? active.selectionStart : null;
   const selEnd = typeof active?.selectionEnd === 'number' ? active.selectionEnd : null;
 
+  // Preserve scroll position across re-renders (especially mobile keyboard)
+  const scrollY = window.scrollY;
+
   const hash = window.location.hash || '#/';
   const route = resolveRoute(hash);
 
@@ -36,7 +39,8 @@ function render() {
     route.bind({ root: app, state, onState: setState });
   }
 
-  document.title = `GALTARUS • ${route.title}`;
+  const t = route.titleFromState ? route.titleFromState(state) : route.title;
+  document.title = `GALTARUS • ${String(t).replace(/<[^>]+>/g, '')}`;
 
   // Restore focus
   if (activeId) {
@@ -51,6 +55,11 @@ function render() {
         }
       }
     }
+  }
+
+  // Restore scroll (best-effort)
+  if (Number.isFinite(scrollY)) {
+    window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' });
   }
 }
 

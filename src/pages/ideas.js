@@ -45,51 +45,58 @@ function saveIdeas(items) {
 
 export function IdeasPage(state) {
   const items = state?.ideas ?? SEED;
+  const q = (state?.ideasQuery ?? '').trim().toLowerCase();
+
+  const filtered = q
+    ? items.filter((it) => {
+        const t = String(it?.title ?? '').toLowerCase();
+        const n = String(it?.note ?? '').toLowerCase();
+        return t.includes(q) || n.includes(q);
+      })
+    : items;
 
   return /* html */ `
     <h1 class="h1">Idées Star Wars</h1>
 
-    <div class="card" style="padding:14px; border-radius: 12px; background: rgba(0,0,0,0.25);">
-      <div class="small">Ajouter une idée</div>
-      <div style="height:8px"></div>
+    <div class="panel">
+      <div class="toolbar">
+        <input id="ideasSearch" class="field" placeholder="Rechercher…" value="${escapeHtml(state?.ideasQuery ?? '')}" />
+      </div>
+      <div class="divider"></div>
 
-      <input id="ideaTitle" placeholder="Titre (ex: Un Jedi… mais)" 
-        style="width:100%; padding:10px 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,0.25); color: var(--text);" />
-      <div style="height:8px"></div>
-      <textarea id="ideaNote" rows="3" placeholder="Note (pitch, twist, scène, etc.)"
-        style="width:100%; padding:10px 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,0.25); color: var(--text); resize: vertical;"></textarea>
+      <input id="ideaTitle" class="field" placeholder="Titre" />
+      <div class="divider"></div>
+      <textarea id="ideaNote" class="field textarea" rows="3" placeholder="Note (pitch, twist, scène, etc.)"></textarea>
 
-      <div style="height:10px"></div>
-      <div class="row">
-        <button class="btn" id="btnAddIdea" type="button">Add</button>
-        <button class="btn" id="btnResetIdeas" type="button">Reset seed</button>
+      <div class="divider"></div>
+      <div class="toolbar">
+        <button class="btn" id="btnAddIdea" type="button">Ajouter</button>
+        <button class="btn" id="btnResetIdeas" type="button">Reset</button>
+        <span class="badge">${filtered.length}/${items.length}</span>
       </div>
     </div>
 
-    <div style="height:14px"></div>
+    <div class="divider"></div>
 
-    <div class="card" style="padding:14px; border-radius: 12px; background: rgba(0,0,0,0.25);">
-      <div class="small">Liste</div>
-      <div style="height:10px"></div>
-      <ol style="margin:0; padding-left: 20px;">
-        ${items
-          .map(
-            (it, idx) => /* html */ `
-          <li style="margin: 0 0 12px;">
-            <div style="display:flex; align-items:flex-start; gap:10px; justify-content:space-between;">
-              <div>
-                <div style="font-weight:650; letter-spacing:0.3px;">${escapeHtml(it.title || 'Untitled')}</div>
-                <div class="small" style="margin-top:4px; opacity:0.9">${escapeHtml(it.note || '')}</div>
-              </div>
-              <button class="btn" type="button" data-del="${idx}" title="Delete" style="padding:8px 10px;">X</button>
-            </div>
-          </li>
-        `
-          )
-          .join('')}
-      </ol>
-      <div class="small" style="margin-top:8px;">Total: ${items.length}</div>
-    </div>
+    <ul class="list">
+      ${filtered
+        .map(
+          (it, idx) => /* html */ `
+        <li class="item">
+          <div>
+            <div class="itemTitle">${escapeHtml(it.title || 'Untitled')}</div>
+            ${it.note ? `<div class="itemNote">${escapeHtml(it.note)}</div>` : ''}
+          </div>
+          <button class="iconBtn" type="button" data-del="${idx}" title="Delete" aria-label="Delete">
+            ✕
+          </button>
+        </li>
+      `
+        )
+        .join('')}
+    </ul>
+
+    ${filtered.length === 0 ? `<div class="divider"></div><div class="small">Aucun résultat.</div>` : ''}
   `;
 }
 
@@ -104,8 +111,13 @@ export function initIdeasState(state) {
 export function bindIdeasHandlers({ root, state, onState }) {
   const title = root.querySelector('#ideaTitle');
   const note = root.querySelector('#ideaNote');
+  const search = root.querySelector('#ideasSearch');
 
-  root.querySelector('#btnAddIdea')?.addEventListener('click', () => {
+  search?.addEventListener('input', (e) => {
+    onState({ ...state, ideasQuery: e.target.value });
+  });
+
+  const add = () => {
     const t = (title?.value ?? '').trim();
     const n = (note?.value ?? '').trim();
     if (!t) return;
@@ -117,6 +129,11 @@ export function bindIdeasHandlers({ root, state, onState }) {
     if (note) note.value = '';
 
     onState({ ...state, ideas: next });
+  };
+
+  root.querySelector('#btnAddIdea')?.addEventListener('click', add);
+  title?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') add();
   });
 
   root.querySelector('#btnResetIdeas')?.addEventListener('click', () => {
@@ -124,12 +141,22 @@ export function bindIdeasHandlers({ root, state, onState }) {
     onState({ ...state, ideas: SEED });
   });
 
-  // Delete buttons
+  // Delete buttons (index refers to filtered view; re-map by matching object identity)
   root.querySelectorAll('[data-del]')?.forEach((btn) => {
     btn.addEventListener('click', () => {
       const idx = Number(btn.getAttribute('data-del'));
+      const q = (state?.ideasQuery ?? '').trim().toLowerCase();
       const items = Array.isArray(state.ideas) ? state.ideas : SEED;
-      const next = items.filter((_, i) => i !== idx);
+      const filtered = q
+        ? items.filter((it) => {
+            const t = String(it?.title ?? '').toLowerCase();
+            const n = String(it?.note ?? '').toLowerCase();
+            return t.includes(q) || n.includes(q);
+          })
+        : items;
+
+      const target = filtered[idx];
+      const next = items.filter((it) => it !== target);
       saveIdeas(next);
       onState({ ...state, ideas: next });
     });

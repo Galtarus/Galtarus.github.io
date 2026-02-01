@@ -43,22 +43,21 @@ export function MemePage(state) {
   return /* html */ `
     <h1 class="h1">Meme Box</h1>
 
-    <div class="card" style="padding:14px; border-radius: 12px; background: rgba(0,0,0,0.25);">
-      <input id="memeInput" value="${escapeHtml(input)}" placeholder="ex: le café me juge" 
-        style="width:100%; padding:10px 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0,0,0,0.25); color: var(--text);" />
+    <div class="panel">
+      <input id="memeInput" class="field" value="${escapeHtml(input)}" placeholder="Ton texte…" />
 
-      <div style="height:10px"></div>
-      <div class="row">
-        <button class="btn" id="modeGoblin" type="button">Goblinize</button>
-        <button class="btn" id="modeAlien" type="button">Alienize</button>
+      <div class="divider"></div>
+      <div class="toolbar">
+        <button class="btn" id="modeGoblin" type="button">Goblin</button>
+        <button class="btn" id="modeAlien" type="button">Alien</button>
         <button class="btn" id="modeGlitch" type="button">Glitch</button>
         <button class="btn" id="btnRandom" type="button">Random</button>
         <button class="btn" id="btnCopy" type="button">Copy</button>
       </div>
 
-      <div style="height:12px"></div>
+      <div class="divider"></div>
       <div class="small">Sortie</div>
-      <div id="memeOut" style="margin-top:6px; padding:10px 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); white-space: pre-wrap;">
+      <div id="memeOut" class="panel" style="white-space: pre-wrap; padding: 12px;">
         ${escapeHtml(input ? transformed : '...')}
       </div>
     </div>

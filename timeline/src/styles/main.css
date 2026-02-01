@@ -73,10 +73,12 @@ button,input,select,textarea{font:inherit;color:inherit}
   cursor:pointer;
 }
 .btn:hover{background:rgba(255,255,255,.07)}
+.btn:focus-visible{outline:2px solid rgba(125,211,252,.45); outline-offset:2px}
 .btn.primary{border-color:rgba(125,211,252,.35);background:rgba(125,211,252,.12)}
 .btn.danger{border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.10)}
 
 .input{width:100%;border:1px solid var(--border);background:rgba(0,0,0,.18);padding:9px 10px;border-radius:10px}
+.input:focus-visible{outline:2px solid rgba(125,211,252,.45); outline-offset:2px}
 
 /* Timeline */
 .timeline{
@@ -93,6 +95,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   cursor:pointer;
 }
 .timeline-item:hover{background:rgba(15,23,35,.78)}
+.timeline-item:focus-visible{outline:2px solid rgba(125,211,252,.55); outline-offset:2px}
 .timeline-item[aria-current="true"]{outline:2px solid rgba(125,211,252,.35)}
 .timeline-item .date{color:var(--muted);font-size:12px}
 .timeline-item .title{margin:6px 0 0 0;font-size:14px}

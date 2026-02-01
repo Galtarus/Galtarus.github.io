@@ -4,6 +4,8 @@ export function el(tag, attrs = {}, ...children) {
   for (const [k, v] of Object.entries(attrs || {})) {
     if (v === null || v === undefined || v === false) continue;
     if (k === 'class') node.className = v;
+    else if (k === 'value') node.value = v;
+    else if (k === 'checked') node.checked = Boolean(v);
     else if (k === 'dataset') {
       for (const [dk, dv] of Object.entries(v)) node.dataset[dk] = dv;
     } else if (k.startsWith('on') && typeof v === 'function') {

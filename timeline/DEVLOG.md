@@ -21,3 +21,10 @@ Next: implement real browse UI + stronger entry details.
 - Implemented add/edit entry form (`#/edit/new` and `#/edit/<id>`).
 - Save/update/delete entries persisted to `localStorage`.
 - Basic validation (title required; date optional but must be YYYY-MM-DD if provided).
+
+## Cycle 4 — polish (search/filter, CSP, a11y/perf basics)
+
+- Added search + tag filter on the timeline view.
+- Tweaked CSP to explicitly allow YouTube frames (nocookie + youtube.com) and https images.
+- Improved focus visibility for keyboard users.
+- `ui.el()` now correctly applies `value`/`checked` as properties (needed for `<select>` state).

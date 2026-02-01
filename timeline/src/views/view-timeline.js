@@ -2,18 +2,56 @@ import { el, mount, formatDate } from '../lib/ui.js';
 import { ytEmbed } from './yt.js';
 
 export function viewTimeline({ root, store, setStore, navigate }) {
-  const entries = store.entries
+  const entriesAll = store.entries
     .slice()
     .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
-  const initialId = store.selectedId || entries.at(-1)?.id || null;
+  const filters = store.filters || { q: '', tag: '' };
+  if (!store.filters) setStore({ filters });
+
+  const tagOptions = collectTags(entriesAll);
+
+  const filtered = entriesAll.filter((e) => matchesFilters(e, filters));
+
+  const initialId = store.selectedId || filtered.at(-1)?.id || entriesAll.at(-1)?.id || null;
   if (initialId && store.selectedId !== initialId) setStore({ selectedId: initialId });
 
   const left = el('section', { class: 'panel' },
     el('h2', {}, 'Timeline'),
+    el('div', { class: 'panel-body stack' },
+      el('label', { class: 'sr-only', for: 'q' }, 'Search'),
+      el('div', { class: 'row wrap' },
+        el('input', {
+          id: 'q',
+          class: 'input',
+          style: 'flex: 1; min-width: 220px',
+          type: 'search',
+          placeholder: 'Search title, summary, tags…',
+          value: filters.q || '',
+          oninput: (e) => setStore({ filters: { ...filters, q: e.target.value } }),
+          'aria-label': 'Search entries',
+        }),
+        el('select', {
+          class: 'input',
+          style: 'min-width: 160px',
+          value: filters.tag || '',
+          onchange: (e) => setStore({ filters: { ...filters, tag: e.target.value } }),
+          'aria-label': 'Filter by tag',
+        },
+          el('option', { value: '' }, 'All tags'),
+          ...tagOptions.map((t) => el('option', { value: t }, `#${t}`))
+        ),
+        el('button', {
+          class: 'btn',
+          type: 'button',
+          onclick: () => setStore({ filters: { q: '', tag: '' } }),
+        }, 'Clear')
+      ),
+      el('div', { class: 'footer-note' }, `${filtered.length}/${entriesAll.length} entries`) 
+    ),
     el('div', { class: 'timeline' },
       el('div', { class: 'timeline-list', role: 'list', 'aria-label': 'Timeline entries' },
-        entries.map((entry) =>
+        filtered.map((entry) =>
           timelineCard(entry, store.selectedId, (id) => {
             setStore({ selectedId: id });
             // Desktop shows right-panel preview; mobile goes straight to detail.
@@ -24,7 +62,7 @@ export function viewTimeline({ root, store, setStore, navigate }) {
     )
   );
 
-  const selected = entries.find((e) => e.id === store.selectedId) || null;
+  const selected = entriesAll.find((e) => e.id === store.selectedId) || null;
 
   const right = el('aside', { class: 'panel right-panel' },
     el('h2', {}, 'Details'),
@@ -38,6 +76,41 @@ export function viewTimeline({ root, store, setStore, navigate }) {
 
 function isDesktop() {
   return window.matchMedia && window.matchMedia('(min-width: 880px)').matches;
+}
+
+function matchesFilters(entry, filters) {
+  const q = (filters.q || '').trim().toLowerCase();
+  const tag = (filters.tag || '').trim().toLowerCase();
+
+  if (tag) {
+    const tags = Array.isArray(entry.tags) ? entry.tags : [];
+    if (!tags.some((t) => String(t).toLowerCase() === tag)) return false;
+  }
+
+  if (!q) return true;
+
+  const hay = [
+    entry.title,
+    entry.summary,
+    entry.date,
+    ...(Array.isArray(entry.tags) ? entry.tags : []),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return hay.includes(q);
+}
+
+function collectTags(entries) {
+  const set = new Set();
+  for (const e of entries) {
+    for (const t of Array.isArray(e.tags) ? e.tags : []) {
+      const clean = String(t).trim().replace(/^#/, '');
+      if (clean) set.add(clean);
+    }
+  }
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
 }
 
 function timelineCard(entry, selectedId, onSelect) {

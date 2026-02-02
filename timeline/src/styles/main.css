@@ -166,8 +166,11 @@ button,input,select,textarea{font:inherit;color:inherit}
   /* Stagger nodes vertically (uses the big empty space, improves density/legibility). */
   transform: translate(-50%, -50%);
 }
-.axis-node.up{transform: translate(-50%, -50%) translateY(-34px)}
-.axis-node.down{transform: translate(-50%, -50%) translateY(34px)}
+/* Spread nodes/cards farther from the axis to use vertical space better on large screens. */
+:root{ --node-offset: 74px; --card-offset: 132px; }
+
+.axis-node.up{transform: translate(-50%, -50%) translateY(calc(-1 * var(--node-offset)))}
+.axis-node.down{transform: translate(-50%, -50%) translateY(var(--node-offset))}
 
 .axis-stem{
   pointer-events:none;
@@ -178,8 +181,8 @@ button,input,select,textarea{font:inherit;color:inherit}
   transform: translateX(-50%);
   border-radius: 2px;
 }
-.axis-node.up .axis-stem{ top:50%; height:34px; }
-.axis-node.down .axis-stem{ top:calc(50% - 34px); height:34px; }
+.axis-node.up .axis-stem{ top:50%; height: var(--node-offset); }
+.axis-node.down .axis-stem{ top:calc(50% - var(--node-offset)); height: var(--node-offset); }
 
 .axis-node .axis-dot{
   pointer-events:none;
@@ -245,8 +248,8 @@ button,input,select,textarea{font:inherit;color:inherit}
   background:rgba(15,23,35,.90);
   box-shadow:var(--shadow);
 }
-.axis-node.up .axis-card{bottom: 76px}
-.axis-node.down .axis-card{top: 76px}
+.axis-node.up .axis-card{bottom: var(--card-offset)}
+.axis-node.down .axis-card{top: var(--card-offset)}
 
 .axis-card .date{color:rgba(230,237,243,.70);font-size:12px}
 .axis-card .title{margin-top:6px;font-size:15px;line-height:1.25}

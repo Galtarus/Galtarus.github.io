@@ -1,7 +1,7 @@
-import { createRouter } from './router.js?v=20260202ux6';
-import { loadState, saveState } from './lib/storage.js?v=20260202ux6';
-import { demoEntries } from './lib/demo-data.js?v=20260202ux6';
-import { renderShell } from './views/shell.js?v=20260202ux6';
+import { createRouter } from './router.js?v=20260202ux12';
+import { loadState, saveState } from './lib/storage.js?v=20260202ux12';
+import { demoEntries } from './lib/demo-data.js?v=20260202ux12';
+import { renderShell } from './views/shell.js?v=20260202ux12';
 
 const APP_KEY = 'timeline.app.v1';
 

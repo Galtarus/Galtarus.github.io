@@ -1,4 +1,4 @@
-import { el, mount, formatDate } from '../lib/ui.js?v=20260202ux6';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260202ux12';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -42,24 +42,28 @@ export function viewTimeline({ root, store, setStore, navigate }) {
     setStore({ zoomIndex: next, zoomAnchor: { id: String(Date.now()), focusRatio, cursorX } });
   }
 
-  const toolbar = el('div', { class: 'axis-toolbar' },
-    el('div', { class: 'zoom' },
-      el('button', {
-        class: 'btn',
-        type: 'button',
-        onclick: () => zoomBy(-1),
-        'aria-label': 'Zoom out',
-      }, '−'),
-      el('div', { class: 'zoom-label', 'aria-label': 'Zoom level' }, `Zoom: ${zoom.label}`),
-      el('button', {
-        class: 'btn',
-        type: 'button',
-        onclick: () => zoomBy(+1),
-        'aria-label': 'Zoom in',
-      }, '+')
-    ),
-    el('div', { class: 'axis-hint' }, 'Drag to pan • Scroll to zoom • Hover for details • Click to open')
-  );
+  const headerCenter = document.querySelector('[data-header-center="1"]');
+  if (headerCenter) {
+    clear(headerCenter);
+    // Keep the interface in ONE place to improve clarity + reclaim vertical space.
+    mount(headerCenter,
+      el('div', { class: 'zoom header-zoom' },
+        el('button', {
+          class: 'btn',
+          type: 'button',
+          onclick: () => zoomBy(-1),
+          'aria-label': 'Zoom out',
+        }, '−'),
+        el('div', { class: 'zoom-label', 'aria-label': 'Zoom level' }, `Zoom: ${zoom.label}`),
+        el('button', {
+          class: 'btn',
+          type: 'button',
+          onclick: () => zoomBy(+1),
+          'aria-label': 'Zoom in',
+        }, '+')
+      )
+    );
+  }
 
   const mobile = isMobile();
 
@@ -85,7 +89,7 @@ export function viewTimeline({ root, store, setStore, navigate }) {
     )
     : el('div', { class: 'axis-empty' }, 'No entries yet. Add one to start.');
 
-  mount(root, toolbar, axis);
+  mount(root, axis);
 
   // After render: desktop gets wheel zoom + horizontal anchoring. Mobile is vertical scroll.
   queueMicrotask(() => {

@@ -1,5 +1,5 @@
-import { el, mount, clear } from '../lib/ui.js?v=20260202ux6';
-import { viewTimeline } from './view-timeline.js?v=20260202ux6';
+import { el, mount, clear } from '../lib/ui.js?v=20260202ux12';
+import { viewTimeline } from './view-timeline.js?v=20260202ux12';
 import { viewEntry } from './view-entry.js?v=20260202ux6';
 import { viewEdit } from './view-edit.js?v=20260202ux6';
 import { viewAbout } from './view-about.js?v=20260202ux6';
@@ -13,7 +13,7 @@ export function renderShell({ root, store, setStore, route, navigate }) {
         el('h1', {}, 'Timeline'),
         el('span', { class: 'badge', title: 'Static SPA' }, 'no-build')
       ),
-      el('div', { class: 'spacer' }),
+      el('div', { class: 'header-center', 'data-header-center': '1' }),
       el('div', { class: 'header-actions' },
         el('button', { class: 'btn primary hide-mobile', type: 'button', onclick: () => navigate('/edit/new') }, 'Add entry'),
         el('button', { class: 'btn hide-mobile', type: 'button', onclick: () => navigate('/about') }, 'About')

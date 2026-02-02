@@ -56,8 +56,8 @@ export function viewTimeline({ root, store, setStore, navigate }) {
     const viewport = root.querySelector('[data-axis-viewport="1"]');
     const selectedEl = root.querySelector('[data-axis-selected="1"]');
     if (!viewport || !selectedEl) return;
-    const targetLeft = selectedEl.offsetLeft - (viewport.clientWidth / 2) + (selectedEl.clientWidth / 2);
-    viewport.scrollTo({ left: Math.max(0, targetLeft), behavior: 'instant' });
+    // scrollIntoView is more robust across browsers than manual scroll math.
+    selectedEl.scrollIntoView({ block: 'nearest', inline: 'center' });
   });
 }
 
@@ -76,9 +76,14 @@ function axisTimeline({ entries, selectedId, zoom, onSelect }) {
   const maxPadded = max ? addDays(max, 20) : null;
 
   const spanDays = minPadded && maxPadded ? Math.max(1, daysBetween(minPadded, maxPadded)) : 1;
-  const trackW = Math.max(900, Math.round(spanDays * zoom.pxPerDay));
 
-  const ticks = minPadded && maxPadded ? buildTicks(minPadded, maxPadded, zoom.tick) : [];
+  // Padding keeps the first/last cards from being clipped at the viewport edges.
+  const padL = 260;
+  const padR = 260;
+  const axisW = Math.round(spanDays * zoom.pxPerDay);
+  const trackW = Math.max(900, padL + axisW + padR);
+
+  const ticks = minPadded && maxPadded ? buildTicks(minPadded, maxPadded, zoom.tick).map((t) => ({ ...t, __padL: padL })) : [];
 
   const viewport = el('div', {
     class: 'axis-viewport',
@@ -92,8 +97,8 @@ function axisTimeline({ entries, selectedId, zoom, onSelect }) {
     'aria-label': 'Timeline axis',
   },
     el('div', { class: 'axis-line', 'aria-hidden': 'true' }),
-    ...ticks.map((t) => axisTick(t, minPadded, zoom)),
-    ...entries.map((entry, idx) => axisNode(entry, idx, { min: minPadded, zoom, selectedId, onSelect }))
+    ...ticks.map((t) => axisTick(t, minPadded, zoom, t.__padL || 0)),
+    ...entries.map((entry, idx) => axisNode(entry, idx, { min: minPadded, zoom, selectedId, onSelect, padL }))
   );
 
   enablePan(viewport);
@@ -102,17 +107,17 @@ function axisTimeline({ entries, selectedId, zoom, onSelect }) {
   return viewport;
 }
 
-function axisTick(tick, min, zoom) {
-  const x = Math.round(daysBetween(min, tick.date) * zoom.pxPerDay);
+function axisTick(tick, min, zoom, padL = 0) {
+  const x = padL + Math.round(daysBetween(min, tick.date) * zoom.pxPerDay);
   return el('div', { class: 'axis-tick', style: `left:${x}px` },
     el('div', { class: 'axis-tick-line', 'aria-hidden': 'true' }),
     el('div', { class: 'axis-tick-label' }, tick.label)
   );
 }
 
-function axisNode(entry, idx, { min, zoom, selectedId, onSelect }) {
+function axisNode(entry, idx, { min, zoom, selectedId, onSelect, padL = 0 }) {
   const d = parseISODate(entry.date) || min;
-  const x = Math.round(daysBetween(min, d) * zoom.pxPerDay);
+  const x = padL + Math.round(daysBetween(min, d) * zoom.pxPerDay);
   const isCurrent = entry.id === selectedId;
 
   // Alternate up/down to avoid collisions.

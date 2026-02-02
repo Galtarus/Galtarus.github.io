@@ -153,7 +153,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 }
 
 .axis-tick{position:absolute;top:var(--axis-center);transform: translate(-50%, -50%);pointer-events:none}
-.axis-tick-line{width:1px;height:46px;background:rgba(255,255,255,.30);margin:0 auto}
+.axis-tick-line{width:1px;height:38px;background:rgba(255,255,255,.38);margin:0 auto}
 .axis-tick-label{margin-top:6px;white-space:nowrap;font-size:13px;font-weight:500;color:rgba(230,237,243,.92);text-shadow:0 2px 12px rgba(0,0,0,.65)}
 
 .axis-node{
@@ -167,7 +167,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   transform: translate(-50%, -50%);
 }
 /* Spread nodes/cards farther from the axis to use vertical space better on large screens. */
-:root{ --node-offset: 74px; --card-offset: 132px; }
+:root{ --node-offset: 56px; --card-offset: 108px; }
 
 .axis-node.up{transform: translate(-50%, -50%) translateY(calc(-1 * var(--node-offset)))}
 .axis-node.down{transform: translate(-50%, -50%) translateY(var(--node-offset))}

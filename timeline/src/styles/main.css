@@ -11,13 +11,13 @@
   --shadow:0 10px 30px rgba(0,0,0,.35);
 
   /* Layout heights (used for viewport math) */
-  --header-h: 44px;
-  --toolbar-h: 44px;
+  --header-h: 40px;
+  --toolbar-h: 40px;
   --bottom-nav-h: 0px;
 
   /* Where the axis sits vertically inside its viewport.
      Smaller value = axis higher = less "dead" space above (better first impression). */
-  --axis-center: 36%;
+  --axis-center: 30%;
 
   color-scheme: dark;
 }
@@ -45,7 +45,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   backdrop-filter: blur(10px);
   border-bottom:1px solid var(--border);
 }
-.header-inner{max-width:1200px;margin:0 auto;padding:8px 16px;display:flex;gap:12px;align-items:center;height:var(--header-h)}
+.header-inner{max-width:1200px;margin:0 auto;padding:6px 16px;display:flex;gap:12px;align-items:center;height:var(--header-h)}
 .brand{display:flex;align-items:center;gap:10px}
 .brand h1{font-size:15px;margin:0;letter-spacing:.35px}
 .badge{font-size:12px;color:var(--muted);border:1px solid var(--border);padding:2px 8px;border-radius:999px}
@@ -103,7 +103,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   z-index:9;
   display:flex;align-items:center;justify-content:space-between;gap:12px;
   flex-wrap: nowrap;
-  padding:8px 12px;
+  padding:6px 12px;
   height: var(--toolbar-h);
   background:rgba(11,15,20,.62);
   backdrop-filter: blur(10px);

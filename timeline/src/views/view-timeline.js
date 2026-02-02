@@ -1,4 +1,4 @@
-import { el, mount, formatDate } from '../lib/ui.js?v=e44923a';
+import { el, mount, formatDate } from '../lib/ui.js?v=9c2f3b1';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },

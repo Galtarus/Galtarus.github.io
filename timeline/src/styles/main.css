@@ -20,7 +20,8 @@
   /* Where the axis sits vertically inside its viewport.
      Keep it near the middle so the timeline uses vertical space better (especially on large screens)
      and cards can breathe both above AND below without feeling “stuck” near the bottom. */
-  --axis-center: 50%;
+  /* Move the axis slightly upward so the first impression isn’t a huge empty top half on desktop. */
+  --axis-center: 46%;
 
   color-scheme: dark;
 }
@@ -225,8 +226,8 @@ button,input,select,textarea{font:inherit;color:inherit}
   /* Keep nodes/cards closer to the axis by default.
      The previous offsets created a lot of dead vertical space on wide desktop screens,
      making the timeline feel sparse and harder to scan. */
-  --node-offset: clamp(28px, 4.5vh, 68px);
-  --card-offset: calc(var(--node-offset) + clamp(30px, 6vh, 110px));
+  --node-offset: clamp(18px, 3vh, 48px);
+  --card-offset: calc(var(--node-offset) + clamp(22px, 4vh, 72px));
 }
 
 .axis-node.up{transform: translate(-50%, -50%) translateY(calc(-1 * var(--node-offset)))}

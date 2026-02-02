@@ -17,9 +17,9 @@
   --bottom-nav-h: 0px;
 
   /* Where the axis sits vertically inside its viewport.
-     Desktop: place it a bit LOWER so the “meat” (cards + labels) uses more vertical space
-     and the first impression isn’t a big empty bottom half. */
-  --axis-center: 56%;
+     Keep it near the middle so the timeline uses vertical space better (especially on large screens)
+     and cards can breathe both above AND below without feeling “stuck” near the bottom. */
+  --axis-center: 50%;
 
   color-scheme: dark;
 }
@@ -153,7 +153,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 }
 
 .axis-tick{position:absolute;top:var(--axis-center);transform: translate(-50%, -50%);pointer-events:none}
-.axis-tick-line{width:1px;height:38px;background:rgba(255,255,255,.30);margin:0 auto}
+.axis-tick-line{width:1px;height:46px;background:rgba(255,255,255,.30);margin:0 auto}
 .axis-tick-label{margin-top:6px;white-space:nowrap;font-size:13px;font-weight:500;color:rgba(230,237,243,.92);text-shadow:0 2px 12px rgba(0,0,0,.65)}
 
 .axis-node{
@@ -166,8 +166,8 @@ button,input,select,textarea{font:inherit;color:inherit}
   /* Stagger nodes vertically (uses the big empty space, improves density/legibility). */
   transform: translate(-50%, -50%);
 }
-.axis-node.up{transform: translate(-50%, -50%) translateY(-24px)}
-.axis-node.down{transform: translate(-50%, -50%) translateY(24px)}
+.axis-node.up{transform: translate(-50%, -50%) translateY(-34px)}
+.axis-node.down{transform: translate(-50%, -50%) translateY(34px)}
 
 .axis-stem{
   pointer-events:none;
@@ -178,8 +178,8 @@ button,input,select,textarea{font:inherit;color:inherit}
   transform: translateX(-50%);
   border-radius: 2px;
 }
-.axis-node.up .axis-stem{ top:50%; height:24px; }
-.axis-node.down .axis-stem{ top:calc(50% - 24px); height:24px; }
+.axis-node.up .axis-stem{ top:50%; height:34px; }
+.axis-node.down .axis-stem{ top:calc(50% - 34px); height:34px; }
 
 .axis-node .axis-dot{
   pointer-events:none;

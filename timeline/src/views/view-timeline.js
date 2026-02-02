@@ -19,23 +19,42 @@ export function viewTimeline({ root, store, setStore, navigate }) {
   const zoomIndex = clampInt(store.zoomIndex ?? 1, 0, ZOOMS.length - 1);
   if (store.zoomIndex !== zoomIndex) setStore({ zoomIndex });
 
+  function getViewport() {
+    return root.querySelector('[data-axis-viewport="1"]');
+  }
+
+  function zoomBy(delta) {
+    const vp = getViewport();
+    const next = clampInt(zoomIndex + delta, 0, ZOOMS.length - 1);
+    if (!vp || next === zoomIndex) {
+      setStore({ zoomIndex: next });
+      return;
+    }
+
+    // Anchor on viewport center.
+    const cursorX = vp.clientWidth / 2;
+    const focusRatio = (vp.scrollLeft + cursorX) / Math.max(1, vp.scrollWidth);
+
+    setStore({ zoomIndex: next, zoomAnchor: { id: String(Date.now()), focusRatio, cursorX } });
+  }
+
   const toolbar = el('div', { class: 'axis-toolbar' },
     el('div', { class: 'zoom' },
       el('button', {
         class: 'btn',
         type: 'button',
-        onclick: () => setStore({ zoomIndex: clampInt(zoomIndex - 1, 0, ZOOMS.length - 1) }),
+        onclick: () => zoomBy(-1),
         'aria-label': 'Zoom out',
       }, '−'),
       el('div', { class: 'zoom-label', 'aria-label': 'Zoom level' }, ZOOMS[zoomIndex].label),
       el('button', {
         class: 'btn',
         type: 'button',
-        onclick: () => setStore({ zoomIndex: clampInt(zoomIndex + 1, 0, ZOOMS.length - 1) }),
+        onclick: () => zoomBy(+1),
         'aria-label': 'Zoom in',
       }, '+')
     ),
-    el('div', { class: 'axis-hint' }, 'Drag to pan • Click a node to open')
+    el('div', { class: 'axis-hint' }, 'Drag to pan • Scroll to zoom • Click a node to open')
   );
 
   const axis = entriesAll.length
@@ -52,7 +71,7 @@ export function viewTimeline({ root, store, setStore, navigate }) {
 
   mount(root, toolbar, axis);
 
-  // After render: center the selected node + enable wheel/pinch zoom.
+  // After render: apply zoom anchor (if any) and center initially.
   queueMicrotask(() => {
     const viewport = root.querySelector('[data-axis-viewport="1"]');
     const selectedEl = root.querySelector('[data-axis-selected="1"]');
@@ -60,20 +79,26 @@ export function viewTimeline({ root, store, setStore, navigate }) {
 
     attachWheelZoom(viewport, {
       getZoomIndex: () => clampInt(store.zoomIndex ?? 1, 0, ZOOMS.length - 1),
-      setZoomIndex: (next, ratioHint) => {
-        setStore({ zoomIndex: next });
-        // After re-render, try to preserve approximate position.
-        queueMicrotask(() => {
-          const vp2 = document.querySelector('[data-axis-viewport="1"]');
-          if (!vp2) return;
-          if (typeof ratioHint === 'number') vp2.scrollLeft = Math.max(0, ratioHint * vp2.scrollWidth - vp2.clientWidth / 2);
-          const sel2 = document.querySelector('[data-axis-selected="1"]');
-          if (sel2) sel2.scrollIntoView({ block: 'nearest', inline: 'center' });
-        });
+      setZoomIndex: (next, anchor) => {
+        setStore({ zoomIndex: next, zoomAnchor: anchor });
       },
     });
 
-    if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest', inline: 'center' });
+    // If we have an anchor, preserve position instead of teleporting to start/selected.
+    if (store.zoomAnchor && store.zoomAnchor.id !== viewport.dataset.zoomApplied) {
+      viewport.dataset.zoomApplied = store.zoomAnchor.id;
+      const { focusRatio, cursorX } = store.zoomAnchor;
+      viewport.scrollLeft = Math.max(0, focusRatio * viewport.scrollWidth - cursorX);
+      // Clear anchor in state (extra render is fine, avoids reapplying).
+      setStore({ zoomAnchor: null, didCenter: true });
+      return;
+    }
+
+    // Initial center only once.
+    if (!store.didCenter && selectedEl) {
+      selectedEl.scrollIntoView({ block: 'nearest', inline: 'center' });
+      setStore({ didCenter: true });
+    }
   });
 }
 
@@ -99,7 +124,16 @@ function axisTimeline({ entries, selectedId, zoom, onSelect }) {
   const axisW = Math.round(spanDays * zoom.pxPerDay);
   const trackW = Math.max(900, padL + axisW + padR);
 
-  const ticks = minPadded && maxPadded ? buildTicks(minPadded, maxPadded, zoom.tick).map((t) => ({ ...t, __padL: padL })) : [];
+  const ticksRaw = minPadded && maxPadded ? buildTicks(minPadded, maxPadded, zoom.tick) : [];
+  const minGap = zoom.pxPerDay < 1 ? 110 : zoom.pxPerDay < 3 ? 80 : 60;
+  let lastX = -Infinity;
+  const ticks = ticksRaw
+    .map((t) => ({ ...t, x: padL + Math.round(daysBetween(minPadded, t.date) * zoom.pxPerDay) }))
+    .filter((t) => {
+      if (t.x - lastX < minGap) return false;
+      lastX = t.x;
+      return true;
+    });
 
   const viewport = el('div', {
     class: 'axis-viewport',
@@ -113,7 +147,7 @@ function axisTimeline({ entries, selectedId, zoom, onSelect }) {
     'aria-label': 'Timeline axis',
   },
     el('div', { class: 'axis-line', 'aria-hidden': 'true' }),
-    ...ticks.map((t) => axisTick(t, minPadded, zoom, t.__padL || 0)),
+    ...ticks.map((t) => axisTick(t)),
     ...entries.map((entry, idx) => axisNode(entry, idx, { min: minPadded, zoom, selectedId, onSelect, padL }))
   );
 
@@ -123,9 +157,8 @@ function axisTimeline({ entries, selectedId, zoom, onSelect }) {
   return viewport;
 }
 
-function axisTick(tick, min, zoom, padL = 0) {
-  const x = padL + Math.round(daysBetween(min, tick.date) * zoom.pxPerDay);
-  return el('div', { class: 'axis-tick', style: `left:${x}px` },
+function axisTick(tick) {
+  return el('div', { class: 'axis-tick', style: `left:${tick.x}px` },
     el('div', { class: 'axis-tick-line', 'aria-hidden': 'true' }),
     el('div', { class: 'axis-tick-label' }, tick.label)
   );
@@ -282,26 +315,23 @@ function enablePan(viewport) {
 
 function attachWheelZoom(viewport, { getZoomIndex, setZoomIndex }) {
   viewport.addEventListener('wheel', (e) => {
-    // Default: wheel zooms (more "timeline"-like). Hold Shift to scroll horizontally instead.
+    // Default: wheel zooms. Hold Shift to wheel-pan horizontally.
     if (e.shiftKey) {
-      // Horizontal pan using wheel.
       viewport.scrollLeft += (e.deltaX || 0) + e.deltaY;
       return;
     }
 
-    // Zoom
     e.preventDefault();
 
     const cur = getZoomIndex();
     const dir = Math.sign(e.deltaY);
-    // Wheel down => zoom out, wheel up => zoom in.
     const next = clampInt(cur + (dir > 0 ? -1 : 1), 0, ZOOMS.length - 1);
     if (next === cur) return;
 
-    // Preserve approx focus position.
     const rect = viewport.getBoundingClientRect();
     const cursorX = e.clientX - rect.left;
-    const ratio = (viewport.scrollLeft + cursorX) / Math.max(1, viewport.scrollWidth);
-    setZoomIndex(next, ratio);
+    const focusRatio = (viewport.scrollLeft + cursorX) / Math.max(1, viewport.scrollWidth);
+
+    setZoomIndex(next, { id: `${Date.now()}-${Math.random().toString(16).slice(2)}`, focusRatio, cursorX });
   }, { passive: false });
 }

@@ -10,9 +10,10 @@
   --danger:#fb7185;
   --shadow:0 10px 30px rgba(0,0,0,.35);
 
-  /* Layout heights (used for viewport math) */
-  --header-h: 40px;
-  --toolbar-h: 40px;
+  /* Layout heights (used for viewport math)
+     Keep these compact: the timeline is the product, not the chrome. */
+  --header-h: 34px;
+  --toolbar-h: 34px;
   --bottom-nav-h: 0px;
 
   /* Where the axis sits vertically inside its viewport.
@@ -45,9 +46,9 @@ button,input,select,textarea{font:inherit;color:inherit}
   backdrop-filter: blur(10px);
   border-bottom:1px solid var(--border);
 }
-.header-inner{max-width:1200px;margin:0 auto;padding:6px 16px;display:flex;gap:12px;align-items:center;height:var(--header-h)}
+.header-inner{max-width:1200px;margin:0 auto;padding:4px 16px;display:flex;gap:12px;align-items:center;height:var(--header-h)}
 .brand{display:flex;align-items:center;gap:10px}
-.brand h1{font-size:15px;margin:0;letter-spacing:.35px}
+.brand h1{font-size:14px;margin:0;letter-spacing:.35px}
 .badge{font-size:12px;color:var(--muted);border:1px solid var(--border);padding:2px 8px;border-radius:999px}
 .spacer{flex:1}
 .header-actions{display:flex;gap:8px;align-items:center}
@@ -82,7 +83,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .btn{
   border:1px solid var(--border);
   background:rgba(255,255,255,.04);
-  padding:8px 10px;
+  padding:6px 10px;
   border-radius:10px;
   cursor:pointer;
 }
@@ -103,7 +104,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   z-index:9;
   display:flex;align-items:center;justify-content:space-between;gap:12px;
   flex-wrap: nowrap;
-  padding:6px 12px;
+  padding:4px 10px;
   height: var(--toolbar-h);
   background:rgba(11,15,20,.62);
   backdrop-filter: blur(10px);
@@ -125,7 +126,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .axis-viewport{background:transparent}
 
 .zoom{display:flex;gap:8px;align-items:center}
-.zoom-label{min-width:110px;text-align:center;color:var(--muted);font-size:12px;border:1px solid var(--border);padding:6px 10px;border-radius:999px}
+.zoom-label{min-width:96px;text-align:center;color:var(--muted);font-size:12px;border:1px solid var(--border);padding:5px 10px;border-radius:999px}
 
 .axis-empty{color:var(--muted);padding:14px;border:1px dashed rgba(255,255,255,.14);border-radius:14px;margin:14px}
 

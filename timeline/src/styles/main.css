@@ -9,7 +9,12 @@
   --accent2:#a78bfa;
   --danger:#fb7185;
   --shadow:0 10px 30px rgba(0,0,0,.35);
+
+  /* Layout heights (used for viewport math) */
+  --header-h: 56px;
+  --toolbar-h: 52px;
   --bottom-nav-h: 0px;
+
   color-scheme: dark;
 }
 *{box-sizing:border-box}
@@ -89,7 +94,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 .tag{font-size:12px;color:var(--muted);border:1px solid var(--border);padding:2px 8px;border-radius:999px}
 
 .axis-toolbar{
-  position:sticky;top:56px;z-index:9;
+  position:sticky;
+  top: var(--header-h);
+  z-index:9;
   display:flex;align-items:center;justify-content:space-between;gap:12px;
   flex-wrap: wrap;
   padding:10px 14px;
@@ -117,7 +124,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .axis-empty{color:var(--muted);padding:14px;border:1px dashed rgba(255,255,255,.14);border-radius:14px;margin:14px}
 
 .axis-viewport{
-  height: calc(100vh - 56px - var(--bottom-nav-h));
+  /* Fit exactly in the remaining visible area (prevents the axis from sitting "too low") */
+  height: calc(100dvh - var(--header-h) - var(--toolbar-h) - var(--bottom-nav-h));
   overflow:auto;
   overscroll-behavior: contain;
   border:0;

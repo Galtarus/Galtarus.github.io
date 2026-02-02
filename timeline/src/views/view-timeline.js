@@ -57,22 +57,36 @@ export function viewTimeline({ root, store, setStore, navigate }) {
     el('div', { class: 'axis-hint' }, 'Drag to pan • Scroll to zoom • Click to open')
   );
 
+  const mobile = isMobile();
+
   const axis = entriesAll.length
-    ? axisTimeline({
-      entries: entriesAll,
-      selectedId: store.selectedId,
-      zoom: ZOOMS[zoomIndex],
-      onSelect: (id) => {
-        setStore({ selectedId: id });
-        navigate(`/entry/${id}`);
-      },
-    })
+    ? (mobile
+      ? verticalTimeline({
+          entries: entriesAll,
+          selectedId: store.selectedId,
+          onSelect: (id) => {
+            setStore({ selectedId: id });
+            navigate(`/entry/${id}`);
+          },
+        })
+      : axisTimeline({
+          entries: entriesAll,
+          selectedId: store.selectedId,
+          zoom: ZOOMS[zoomIndex],
+          onSelect: (id) => {
+            setStore({ selectedId: id });
+            navigate(`/entry/${id}`);
+          },
+        })
+    )
     : el('div', { class: 'axis-empty' }, 'No entries yet. Add one to start.');
 
   mount(root, toolbar, axis);
 
-  // After render: apply zoom anchor (if any) and center initially.
+  // After render: desktop gets wheel zoom + horizontal anchoring. Mobile is vertical scroll.
   queueMicrotask(() => {
+    if (isMobile()) return;
+
     const viewport = root.querySelector('[data-axis-viewport="1"]');
     const selectedEl = root.querySelector('[data-axis-selected="1"]');
     if (!viewport) return;
@@ -89,8 +103,6 @@ export function viewTimeline({ root, store, setStore, navigate }) {
       viewport.dataset.zoomApplied = store.zoomAnchor.id;
       const { focusRatio, cursorX } = store.zoomAnchor;
       viewport.scrollLeft = Math.max(0, focusRatio * viewport.scrollWidth - cursorX);
-      // Do NOT setStore here: extra re-render can reset scroll and feel like a jump.
-      if (!store.didCenter) setStore({ didCenter: true });
       return;
     }
 
@@ -102,7 +114,45 @@ export function viewTimeline({ root, store, setStore, navigate }) {
   });
 }
 
+function isMobile() {
+  return window.matchMedia && window.matchMedia('(max-width: 879px)').matches;
+}
+
 // (Search/filter UI intentionally removed for the "just the axis" phase.)
+
+function verticalTimeline({ entries, selectedId, onSelect }) {
+  const items = entries
+    .slice()
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+    .map((e) => verticalItem(e, e.id === selectedId, onSelect));
+
+  return el('div', { class: 'vt-viewport' },
+    el('div', { class: 'vt-track', role: 'list', 'aria-label': 'Timeline (vertical)' }, ...items)
+  );
+}
+
+function verticalItem(entry, isCurrent, onSelect) {
+  const title = entry.title || '(Untitled)';
+  return el('article', {
+    class: `vt-item ${isCurrent ? 'is-current' : ''}`,
+    role: 'listitem',
+    tabindex: '0',
+    onclick: () => onSelect(entry.id),
+    onkeydown: (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onSelect(entry.id);
+      }
+    },
+  },
+    el('div', { class: 'vt-dot', 'aria-hidden': 'true' }),
+    el('div', { class: 'vt-card' },
+      el('div', { class: 'vt-date' }, formatDate(entry.date)),
+      el('div', { class: 'vt-title' }, title),
+      entry.summary ? el('div', { class: 'vt-summary' }, entry.summary) : null
+    )
+  );
+}
 
 function axisTimeline({ entries, selectedId, zoom, onSelect }) {
   const dates = entries

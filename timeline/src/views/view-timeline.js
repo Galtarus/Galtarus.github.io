@@ -89,8 +89,8 @@ export function viewTimeline({ root, store, setStore, navigate }) {
       viewport.dataset.zoomApplied = store.zoomAnchor.id;
       const { focusRatio, cursorX } = store.zoomAnchor;
       viewport.scrollLeft = Math.max(0, focusRatio * viewport.scrollWidth - cursorX);
-      // Clear anchor in state (extra render is fine, avoids reapplying).
-      setStore({ zoomAnchor: null, didCenter: true });
+      // Do NOT setStore here: extra re-render can reset scroll and feel like a jump.
+      if (!store.didCenter) setStore({ didCenter: true });
       return;
     }
 

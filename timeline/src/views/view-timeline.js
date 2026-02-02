@@ -54,7 +54,7 @@ export function viewTimeline({ root, store, setStore, navigate }) {
         'aria-label': 'Zoom in',
       }, '+')
     ),
-    el('div', { class: 'axis-hint' }, 'Drag to pan • Scroll to zoom • Click to open')
+    el('div', { class: 'axis-hint' }, 'Drag to pan • Scroll to zoom • Hover nodes for titles • Click to open')
   );
 
   const mobile = isMobile();
@@ -133,6 +133,10 @@ function verticalTimeline({ entries, selectedId, onSelect }) {
 
 function verticalItem(entry, isCurrent, onSelect) {
   const title = entry.title || '(Untitled)';
+  const subtitle = subtitleFromEntry(entry);
+  const chip = mediaChip(entry);
+  const preview = mediaPreview(entry);
+
   return el('article', {
     class: `vt-item ${isCurrent ? 'is-current' : ''}`,
     role: 'listitem',
@@ -147,9 +151,13 @@ function verticalItem(entry, isCurrent, onSelect) {
   },
     el('div', { class: 'vt-dot', 'aria-hidden': 'true' }),
     el('div', { class: 'vt-card' },
-      el('div', { class: 'vt-date' }, formatDate(entry.date)),
+      el('div', { class: 'vt-top' },
+        el('div', { class: 'vt-date' }, formatDate(entry.date)),
+        chip
+      ),
       el('div', { class: 'vt-title' }, title),
-      entry.summary ? el('div', { class: 'vt-summary' }, entry.summary) : null
+      subtitle ? el('div', { class: 'vt-sub' }, subtitle) : null,
+      preview
     )
   );
 }
@@ -224,6 +232,9 @@ function axisNode(entry, idx, { min, zoom, selectedId, onSelect, padL = 0 }) {
 
   const title = entry.title || '(Untitled)';
 
+  const subtitle = subtitleFromEntry(entry);
+  const chip = mediaChip(entry);
+
   return el('article', {
     class: `axis-node ${side} ${isCurrent ? 'is-current' : ''}`,
     role: 'listitem',
@@ -245,19 +256,67 @@ function axisNode(entry, idx, { min, zoom, selectedId, onSelect, padL = 0 }) {
   },
     el('div', { class: 'axis-dot', 'aria-hidden': 'true' }),
     el('div', { class: 'axis-label' },
-      el('div', { class: 'axis-label-date' }, formatDate(entry.date)),
-      el('div', { class: 'axis-label-title' }, title)
+      el('div', { class: 'axis-label-top' },
+        el('div', { class: 'axis-label-date' }, formatDate(entry.date)),
+        chip
+      ),
+      el('div', { class: 'axis-label-title' }, title),
+      subtitle ? el('div', { class: 'axis-label-sub' }, subtitle) : null
     ),
     isCurrent
       ? el('div', { class: 'axis-card' },
           el('div', { class: 'date' }, formatDate(entry.date)),
-          el('div', { class: 'title' }, title)
+          el('div', { class: 'title' }, title),
+          subtitle ? el('div', { class: 'sub' }, subtitle) : null,
+          mediaPreview(entry)
         )
       : null
   );
 }
 
 // Detail UI intentionally moved to /entry/:id.
+
+function subtitleFromEntry(entry) {
+  const s = String(entry.summary || '').trim();
+  if (!s) return '';
+  return s.length > 84 ? `${s.slice(0, 84).trim()}…` : s;
+}
+
+function mediaChip(entry) {
+  const hasImg = !!entry.imageUrl;
+  const hasYt = !!entry.youtubeId;
+  if (!hasImg && !hasYt) return null;
+  const label = hasYt ? 'YT' : 'IMG';
+  return el('span', { class: `media-chip ${hasYt ? 'yt' : 'img'}`, title: hasYt ? 'Has YouTube' : 'Has image', 'aria-label': hasYt ? 'Has YouTube' : 'Has image' }, label);
+}
+
+function mediaPreview(entry) {
+  const hasImg = !!entry.imageUrl;
+  const hasYt = !!entry.youtubeId;
+
+  if (hasImg) {
+    return el('img', {
+      class: 'media-thumb',
+      src: entry.imageUrl,
+      alt: entry.title ? `Image: ${entry.title}` : 'Entry image',
+      loading: 'lazy',
+      referrerpolicy: 'no-referrer',
+    });
+  }
+
+  if (hasYt) {
+    const thumb = `https://i.ytimg.com/vi/${encodeURIComponent(entry.youtubeId)}/hqdefault.jpg`;
+    return el('img', {
+      class: 'media-thumb yt',
+      src: thumb,
+      alt: entry.title ? `YouTube thumbnail: ${entry.title}` : 'YouTube thumbnail',
+      loading: 'lazy',
+      referrerpolicy: 'no-referrer',
+    });
+  }
+
+  return null;
+}
 
 function parseISODate(s) {
   if (!s) return null;

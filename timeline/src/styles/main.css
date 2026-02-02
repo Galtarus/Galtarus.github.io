@@ -165,7 +165,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .axis-node.is-current .axis-dot{background:rgba(167,139,250,.95); box-shadow:0 0 0 6px rgba(167,139,250,.16), 0 18px 45px rgba(0,0,0,.6)}
 
 .axis-label{
-  position:absolute;left:50%;transform: translateX(-50%);
+  position:absolute;left:50%;
+  transform: translateX(-50%) translateY(0);
   width:max-content;
   max-width: 240px;
   padding:7px 10px;
@@ -174,6 +175,16 @@ button,input,select,textarea{font:inherit;color:inherit}
   background:rgba(0,0,0,.32);
   backdrop-filter: blur(6px);
   pointer-events:none;
+
+  /* Reduce clutter on dense timelines: show labels on hover/focus/current only. */
+  opacity: 0;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.axis-node:hover .axis-label,
+.axis-node:focus-visible .axis-label,
+.axis-node.is-current .axis-label{
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
 }
 .axis-node.up .axis-label{bottom: 22px}
 .axis-node.down .axis-label{top: 22px}

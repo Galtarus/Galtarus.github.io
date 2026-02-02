@@ -17,8 +17,8 @@
   --bottom-nav-h: 0px;
 
   /* Where the axis sits vertically inside its viewport.
-     Smaller value = axis higher = less "dead" space above (better first impression). */
-  --axis-center: 38%;
+     With staggered nodes, keep it closer to center for balance. */
+  --axis-center: 44%;
 
   color-scheme: dark;
 }
@@ -155,7 +155,31 @@ button,input,select,textarea{font:inherit;color:inherit}
 .axis-tick-line{width:1px;height:38px;background:rgba(255,255,255,.30);margin:0 auto}
 .axis-tick-label{margin-top:6px;white-space:nowrap;font-size:13px;font-weight:500;color:rgba(230,237,243,.92);text-shadow:0 2px 12px rgba(0,0,0,.65)}
 
-.axis-node{position:absolute;top:var(--axis-center);transform: translate(-50%, -50%);width:52px;height:52px;outline:none;cursor:pointer}
+.axis-node{
+  position:absolute;
+  top:var(--axis-center);
+  width:52px;
+  height:52px;
+  outline:none;
+  cursor:pointer;
+  /* Stagger nodes vertically (uses the big empty space, improves density/legibility). */
+  transform: translate(-50%, -50%);
+}
+.axis-node.up{transform: translate(-50%, -50%) translateY(-24px)}
+.axis-node.down{transform: translate(-50%, -50%) translateY(24px)}
+
+.axis-stem{
+  pointer-events:none;
+  position:absolute;
+  left:50%;
+  width:2px;
+  background:rgba(255,255,255,.16);
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+.axis-node.up .axis-stem{ top:50%; height:24px; }
+.axis-node.down .axis-stem{ top:calc(50% - 24px); height:24px; }
+
 .axis-node .axis-dot{
   pointer-events:none;
   position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:999px;
@@ -187,8 +211,8 @@ button,input,select,textarea{font:inherit;color:inherit}
   opacity: 1;
   transform: translateX(-50%) translateY(-2px);
 }
-.axis-node.up .axis-label{bottom: 22px}
-.axis-node.down .axis-label{top: 22px}
+.axis-node.up .axis-label{bottom: 46px}
+.axis-node.down .axis-label{top: 46px}
 .axis-label-top{display:flex;gap:8px;align-items:center;justify-content:space-between}
 .axis-label-date{font-size:11px;color:rgba(230,237,243,.64)}
 .axis-label-title{margin-top:2px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
@@ -214,8 +238,8 @@ button,input,select,textarea{font:inherit;color:inherit}
   background:rgba(15,23,35,.90);
   box-shadow:var(--shadow);
 }
-.axis-node.up .axis-card{bottom: 52px}
-.axis-node.down .axis-card{top: 52px}
+.axis-node.up .axis-card{bottom: 76px}
+.axis-node.down .axis-card{top: 76px}
 
 .axis-card .date{color:rgba(230,237,243,.70);font-size:12px}
 .axis-card .title{margin-top:6px;font-size:15px;line-height:1.25}

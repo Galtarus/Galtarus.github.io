@@ -1,4 +1,4 @@
-import { el, mount, formatDate } from '../lib/ui.js?v=20260202ux3';
+import { el, mount, formatDate } from '../lib/ui.js?v=20260202ux5';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -254,6 +254,7 @@ function axisNode(entry, idx, { min, zoom, selectedId, onSelect, padL = 0 }) {
       }
     },
   },
+    el('div', { class: 'axis-stem', 'aria-hidden': 'true' }),
     el('div', { class: 'axis-dot', 'aria-hidden': 'true' }),
     el('div', { class: 'axis-label' },
       el('div', { class: 'axis-label-top' },

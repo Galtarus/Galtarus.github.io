@@ -216,6 +216,9 @@ button,input,select,textarea{font:inherit;color:inherit}
   transform: translateX(-50%) translateY(-2px);
 }
 
+/* Avoid duplicated information: the current entry already has a full card. */
+.axis-node.is-current .axis-label{display:none}
+
 /* At maximum zoom, default to visible labels (better first impression). */
 .zoom-detail .axis-label{
   opacity: 1;

@@ -168,11 +168,11 @@ button,input,select,textarea{font:inherit;color:inherit}
   position:absolute;left:50%;
   transform: translateX(-50%) translateY(0);
   width:max-content;
-  max-width: 240px;
-  padding:7px 10px;
+  max-width: 260px;
+  padding:8px 10px;
   border:1px solid rgba(255,255,255,.14);
-  border-radius:999px;
-  background:rgba(0,0,0,.32);
+  border-radius:14px;
+  background:rgba(0,0,0,.30);
   backdrop-filter: blur(6px);
   pointer-events:none;
 
@@ -188,8 +188,21 @@ button,input,select,textarea{font:inherit;color:inherit}
 }
 .axis-node.up .axis-label{bottom: 22px}
 .axis-node.down .axis-label{top: 22px}
+.axis-label-top{display:flex;gap:8px;align-items:center;justify-content:space-between}
 .axis-label-date{font-size:11px;color:rgba(230,237,243,.64)}
-.axis-label-title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}
+.axis-label-title{margin-top:2px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.axis-label-sub{margin-top:2px;font-size:12px;color:rgba(230,237,243,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+
+.media-chip{
+  font-size:11px;
+  padding:2px 7px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
+  color:rgba(230,237,243,.78);
+  background:rgba(255,255,255,.06);
+}
+.media-chip.yt{border-color:rgba(125,211,252,.28); background:rgba(125,211,252,.10)}
+.media-chip.img{border-color:rgba(167,139,250,.28); background:rgba(167,139,250,.10)}
 
 .axis-card{
   position:absolute;left:50%;transform: translateX(-50%);
@@ -205,6 +218,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 .axis-card .date{color:rgba(230,237,243,.70);font-size:12px}
 .axis-card .title{margin-top:6px;font-size:15px;line-height:1.25}
+.axis-card .sub{margin-top:6px;color:rgba(230,237,243,.82); font-size:13px}
+
+.media-thumb{margin-top:10px;width:100%;height:auto;border-radius:12px;display:block;border:1px solid rgba(255,255,255,.12)}
 
 .axis-node:focus-visible .axis-dot{outline:2px solid rgba(125,211,252,.55);outline-offset:2px}
 .axis-node[aria-current="true"] .axis-card{outline:2px solid rgba(167,139,250,.35)}
@@ -247,9 +263,11 @@ button,input,select,textarea{font:inherit;color:inherit}
     background: rgba(15,23,35,.86);
     box-shadow: var(--shadow);
   }
+  .vt-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .vt-date{font-size:12px;color:rgba(230,237,243,.70)}
-  .vt-title{margin-top:4px;font-size:15px;line-height:1.25}
-  .vt-summary{margin-top:6px;color:rgba(230,237,243,.82); font-size:13px}
+  .vt-title{margin-top:6px;font-size:15px;line-height:1.25}
+  .vt-sub{margin-top:6px;color:rgba(230,237,243,.82); font-size:13px}
+  .vt-card .media-thumb{margin-top:10px}
 }
 
 /* Detail */

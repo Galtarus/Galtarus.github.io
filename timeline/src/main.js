@@ -19,9 +19,20 @@ function bootstrapStore() {
 
 const store = bootstrapStore();
 
+let renderScheduled = false;
+function requestRender() {
+  if (renderScheduled) return;
+  renderScheduled = true;
+  queueMicrotask(() => {
+    renderScheduled = false;
+    render();
+  });
+}
+
 function setStore(patch) {
   Object.assign(store, patch);
   saveState(APP_KEY, store);
+  requestRender();
 }
 
 const router = createRouter();

@@ -21,7 +21,7 @@ export function renderShell({ root, store, setStore, route, navigate }) {
     )
   );
 
-  const main = el('main', { class: 'main' });
+  const main = el('main', { class: route.name === 'timeline' ? 'main axis-only' : 'main' });
 
   const bottomNav = el('nav', { class: 'bottom-nav', 'aria-label': 'Bottom navigation' },
     el('div', { class: 'bottom-nav-inner' },

@@ -44,9 +44,12 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 .main{max-width:1200px;margin:0 auto;padding:16px;display:grid;gap:16px}
 
+.main.axis-only{max-width:none;padding:0}
+
 /* Desktop: horizontal timeline + side panel */
 @media (min-width: 880px){
   .main{grid-template-columns: 1.3fr .9fr; align-items:start}
+  .main.axis-only{grid-template-columns:1fr}
   .bottom-nav{display:none}
 }
 
@@ -81,21 +84,30 @@ button,input,select,textarea{font:inherit;color:inherit}
 .input:focus-visible{outline:2px solid rgba(125,211,252,.45); outline-offset:2px}
 
 /* Timeline */
-.timeline{padding:12px 14px}
 .tag{font-size:12px;color:var(--muted);border:1px solid var(--border);padding:2px 8px;border-radius:999px}
+
+.axis-toolbar{
+  position:sticky;top:56px;z-index:9;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:10px 14px;
+  background:rgba(11,15,20,.62);
+  backdrop-filter: blur(10px);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.axis-hint{color:var(--muted);font-size:12px}
 
 .zoom{display:flex;gap:8px;align-items:center}
 .zoom-label{min-width:72px;text-align:center;color:var(--muted);font-size:12px;border:1px solid var(--border);padding:6px 10px;border-radius:999px}
 
-.axis-empty{color:var(--muted);padding:14px;border:1px dashed rgba(255,255,255,.14);border-radius:14px}
+.axis-empty{color:var(--muted);padding:14px;border:1px dashed rgba(255,255,255,.14);border-radius:14px;margin:14px}
 
 .axis-viewport{
-  height: 340px;
+  height: calc(100vh - 56px - 54px);
   overflow:auto;
   overscroll-behavior: contain;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius: 14px;
-  background:rgba(0,0,0,.12);
+  border:0;
+  border-radius: 0;
+  background:transparent;
   scrollbar-width: thin;
   touch-action: pan-x;
   cursor: grab;

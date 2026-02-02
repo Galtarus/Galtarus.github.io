@@ -1,4 +1,4 @@
-import { el, mount, formatDate } from '../lib/ui.js?v=500adc2';
+import { el, mount, formatDate } from '../lib/ui.js?v=9bcd25d';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -148,7 +148,11 @@ function axisNode(entry, idx, { min, zoom, selectedId, onSelect, padL = 0 }) {
     style: `left:${x}px`,
     'aria-current': isCurrent ? 'true' : 'false',
     'data-axis-selected': isCurrent ? '1' : '0',
-    onclick: () => onSelect(entry.id),
+    onclick: (e) => {
+      const viewport = e.currentTarget?.closest?.('[data-axis-viewport="1"]');
+      if (viewport?.dataset?.dragging === '1') return;
+      onSelect(entry.id);
+    },
     onkeydown: (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -239,12 +243,14 @@ function clampInt(v, min, max) {
 
 function enablePan(viewport) {
   let down = false;
+  let moved = false;
   let startX = 0;
   let startLeft = 0;
 
   viewport.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
     down = true;
+    moved = false;
     startX = e.clientX;
     startLeft = viewport.scrollLeft;
     viewport.setPointerCapture(e.pointerId);
@@ -254,12 +260,19 @@ function enablePan(viewport) {
   viewport.addEventListener('pointermove', (e) => {
     if (!down) return;
     const dx = e.clientX - startX;
+    if (Math.abs(dx) > 3) moved = true;
     viewport.scrollLeft = startLeft - dx;
   });
 
   const end = () => {
     down = false;
     viewport.classList.remove('is-panning');
+    if (moved) {
+      viewport.dataset.dragging = '1';
+      setTimeout(() => {
+        if (viewport.dataset.dragging === '1') delete viewport.dataset.dragging;
+      }, 160);
+    }
   };
 
   viewport.addEventListener('pointerup', end);

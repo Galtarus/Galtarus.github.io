@@ -211,6 +211,12 @@ button,input,select,textarea{font:inherit;color:inherit}
   opacity: 1;
   transform: translateX(-50%) translateY(-2px);
 }
+
+/* At maximum zoom, default to visible labels (better first impression). */
+.zoom-detail .axis-label{
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
 .axis-node.up .axis-label{bottom: 46px}
 .axis-node.down .axis-label{top: 46px}
 .axis-label-top{display:flex;gap:8px;align-items:center;justify-content:space-between}

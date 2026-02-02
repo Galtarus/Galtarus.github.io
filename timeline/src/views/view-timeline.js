@@ -1,4 +1,4 @@
-import { el, mount, formatDate } from '../lib/ui.js?v=20260202ux5';
+import { el, mount, formatDate } from '../lib/ui.js?v=20260202ux6';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -18,6 +18,10 @@ export function viewTimeline({ root, store, setStore, navigate }) {
 
   const zoomIndex = clampInt(store.zoomIndex ?? 1, 0, ZOOMS.length - 1);
   if (store.zoomIndex !== zoomIndex) setStore({ zoomIndex });
+
+  const zoom = ZOOMS[zoomIndex];
+  // Marketability: when zoomed all the way in, show titles by default (no "mystery dots").
+  root.classList.toggle('zoom-detail', zoom.id === 'close');
 
   function getViewport() {
     return root.querySelector('[data-axis-viewport="1"]');
@@ -46,7 +50,7 @@ export function viewTimeline({ root, store, setStore, navigate }) {
         onclick: () => zoomBy(-1),
         'aria-label': 'Zoom out',
       }, '−'),
-      el('div', { class: 'zoom-label', 'aria-label': 'Zoom level' }, `Zoom: ${ZOOMS[zoomIndex].label}`),
+      el('div', { class: 'zoom-label', 'aria-label': 'Zoom level' }, `Zoom: ${zoom.label}`),
       el('button', {
         class: 'btn',
         type: 'button',
@@ -54,7 +58,7 @@ export function viewTimeline({ root, store, setStore, navigate }) {
         'aria-label': 'Zoom in',
       }, '+')
     ),
-    el('div', { class: 'axis-hint' }, 'Drag to pan • Scroll to zoom • Hover nodes for titles • Click to open')
+    el('div', { class: 'axis-hint' }, 'Drag to pan • Scroll to zoom • Hover for details • Click to open')
   );
 
   const mobile = isMobile();
@@ -72,7 +76,7 @@ export function viewTimeline({ root, store, setStore, navigate }) {
       : axisTimeline({
           entries: entriesAll,
           selectedId: store.selectedId,
-          zoom: ZOOMS[zoomIndex],
+          zoom,
           onSelect: (id) => {
             setStore({ selectedId: id });
             navigate(`/entry/${id}`);

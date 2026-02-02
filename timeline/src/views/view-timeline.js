@@ -1,10 +1,11 @@
-import { el, mount, formatDate } from '../lib/ui.js?v=9bb71c6';
+import { el, mount, formatDate } from '../lib/ui.js?v=500adc2';
 
 const ZOOMS = [
-  { id: 'far', label: 'Far', pxPerDay: 0.25, tick: 'year' },
-  { id: 'year', label: 'Year', pxPerDay: 0.6, tick: 'month' },
-  { id: 'month', label: 'Month', pxPerDay: 1.4, tick: 'month' },
-  { id: 'near', label: 'Near', pxPerDay: 3.0, tick: 'day' },
+  { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
+  { id: 'year', label: 'Year', pxPerDay: 0.7, tick: 'month' },
+  { id: 'month', label: 'Month', pxPerDay: 2.2, tick: 'month' },
+  { id: 'near', label: 'Near', pxPerDay: 7.5, tick: 'day' },
+  { id: 'close', label: 'Close', pxPerDay: 18, tick: 'day' },
 ];
 
 export function viewTimeline({ root, store, setStore, navigate }) {
@@ -51,13 +52,28 @@ export function viewTimeline({ root, store, setStore, navigate }) {
 
   mount(root, toolbar, axis);
 
-  // After render: center the selected node.
+  // After render: center the selected node + enable wheel/pinch zoom.
   queueMicrotask(() => {
     const viewport = root.querySelector('[data-axis-viewport="1"]');
     const selectedEl = root.querySelector('[data-axis-selected="1"]');
-    if (!viewport || !selectedEl) return;
-    // scrollIntoView is more robust across browsers than manual scroll math.
-    selectedEl.scrollIntoView({ block: 'nearest', inline: 'center' });
+    if (!viewport) return;
+
+    attachWheelZoom(viewport, {
+      getZoomIndex: () => clampInt(store.zoomIndex ?? 1, 0, ZOOMS.length - 1),
+      setZoomIndex: (next, ratioHint) => {
+        setStore({ zoomIndex: next });
+        // After re-render, try to preserve approximate position.
+        queueMicrotask(() => {
+          const vp2 = document.querySelector('[data-axis-viewport="1"]');
+          if (!vp2) return;
+          if (typeof ratioHint === 'number') vp2.scrollLeft = Math.max(0, ratioHint * vp2.scrollWidth - vp2.clientWidth / 2);
+          const sel2 = document.querySelector('[data-axis-selected="1"]');
+          if (sel2) sel2.scrollIntoView({ block: 'nearest', inline: 'center' });
+        });
+      },
+    });
+
+    if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest', inline: 'center' });
   });
 }
 
@@ -120,10 +136,10 @@ function axisNode(entry, idx, { min, zoom, selectedId, onSelect, padL = 0 }) {
   const x = padL + Math.round(daysBetween(min, d) * zoom.pxPerDay);
   const isCurrent = entry.id === selectedId;
 
-  // Alternate up/down to avoid collisions.
+  // Alternate up/down to reduce label collisions.
   const side = (idx % 2 === 0) ? 'up' : 'down';
 
-  const tags = Array.isArray(entry.tags) ? entry.tags : [];
+  const title = entry.title || '(Untitled)';
 
   return el('article', {
     class: `axis-node ${side} ${isCurrent ? 'is-current' : ''}`,
@@ -141,11 +157,16 @@ function axisNode(entry, idx, { min, zoom, selectedId, onSelect, padL = 0 }) {
     },
   },
     el('div', { class: 'axis-dot', 'aria-hidden': 'true' }),
-    el('div', { class: 'axis-card' },
-      el('div', { class: 'date' }, formatDate(entry.date)),
-      el('div', { class: 'title' }, entry.title || '(Untitled)'),
-      tags.length ? el('div', { class: 'tags' }, tags.slice(0, 3).map((t) => el('span', { class: 'tag' }, `#${t}`))) : null
-    )
+    el('div', { class: 'axis-label' },
+      el('div', { class: 'axis-label-date' }, formatDate(entry.date)),
+      el('div', { class: 'axis-label-title' }, title)
+    ),
+    isCurrent
+      ? el('div', { class: 'axis-card' },
+          el('div', { class: 'date' }, formatDate(entry.date)),
+          el('div', { class: 'title' }, title)
+        )
+      : null
   );
 }
 
@@ -244,4 +265,23 @@ function enablePan(viewport) {
   viewport.addEventListener('pointerup', end);
   viewport.addEventListener('pointercancel', end);
   viewport.addEventListener('pointerleave', end);
+}
+
+function attachWheelZoom(viewport, { getZoomIndex, setZoomIndex }) {
+  viewport.addEventListener('wheel', (e) => {
+    // Ctrl+wheel (or trackpad pinch) to zoom.
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+
+    const cur = getZoomIndex();
+    const dir = Math.sign(e.deltaY);
+    const next = clampInt(cur + (dir > 0 ? -1 : 1), 0, ZOOMS.length - 1);
+    if (next === cur) return;
+
+    // Preserve approx focus position.
+    const rect = viewport.getBoundingClientRect();
+    const cursorX = e.clientX - rect.left;
+    const ratio = (viewport.scrollLeft + cursorX) / Math.max(1, viewport.scrollWidth);
+    setZoomIndex(next, ratio);
+  }, { passive: false });
 }

@@ -125,7 +125,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .axis-tick-line{width:1px;height:34px;background:rgba(255,255,255,.18);margin:0 auto}
 .axis-tick-label{margin-top:6px;white-space:nowrap;font-size:12px;color:var(--muted);text-shadow:0 2px 12px rgba(0,0,0,.65)}
 
-.axis-node{position:absolute;top:50%;transform: translate(-50%, -50%);width:240px;outline:none}
+.axis-node{position:absolute;top:50%;transform: translate(-50%, -50%);width:0;outline:none}
 .axis-node .axis-dot{
   position:absolute;left:50%;top:50%;width:12px;height:12px;border-radius:999px;
   transform: translate(-50%, -50%);
@@ -134,24 +134,38 @@ button,input,select,textarea{font:inherit;color:inherit}
 }
 .axis-node.is-current .axis-dot{background:rgba(167,139,250,.95); box-shadow:0 0 0 5px rgba(167,139,250,.18), 0 18px 45px rgba(0,0,0,.6)}
 
+.axis-label{
+  position:absolute;left:50%;transform: translateX(-50%);
+  width:max-content;
+  max-width: 220px;
+  padding:6px 8px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:999px;
+  background:rgba(0,0,0,.25);
+  backdrop-filter: blur(6px);
+  pointer-events:none;
+}
+.axis-node.up .axis-label{bottom: 18px}
+.axis-node.down .axis-label{top: 18px}
+.axis-label-date{font-size:11px;color:var(--muted)}
+.axis-label-title{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+
 .axis-card{
   position:absolute;left:50%;transform: translateX(-50%);
-  width:240px;
+  width:260px;
   border:1px solid var(--border);
   border-radius:14px;
   padding:10px 10px;
-  background:rgba(15,23,35,.72);
+  background:rgba(15,23,35,.82);
   box-shadow:var(--shadow);
 }
-.axis-node.up .axis-card{bottom: 26px}
-.axis-node.down .axis-card{top: 26px}
+.axis-node.up .axis-card{bottom: 46px}
+.axis-node.down .axis-card{top: 46px}
 
 .axis-card .date{color:var(--muted);font-size:12px}
 .axis-card .title{margin-top:6px;font-size:14px;line-height:1.25}
-.axis-card .tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
 
-.axis-node:hover .axis-card{background:rgba(15,23,35,.88)}
-.axis-node:focus-visible .axis-card{outline:2px solid rgba(125,211,252,.55);outline-offset:2px}
+.axis-node:focus-visible .axis-dot{outline:2px solid rgba(125,211,252,.55);outline-offset:2px}
 .axis-node[aria-current="true"] .axis-card{outline:2px solid rgba(167,139,250,.35)}
 
 @media (max-width: 879px){

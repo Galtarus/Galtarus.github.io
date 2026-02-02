@@ -17,8 +17,9 @@
   --bottom-nav-h: 0px;
 
   /* Where the axis sits vertically inside its viewport.
-     With staggered nodes, keep it closer to center for balance. */
-  --axis-center: 44%;
+     Desktop: place it a bit LOWER so the “meat” (cards + labels) uses more vertical space
+     and the first impression isn’t a big empty bottom half. */
+  --axis-center: 56%;
 
   color-scheme: dark;
 }

@@ -1,6 +1,6 @@
-import { el } from '../lib/ui.js?v=9bb71c6';
-import { downloadJson } from '../lib/download.js?v=9bb71c6';
-import { demoEntries } from '../lib/demo-data.js?v=9bb71c6';
+import { el } from '../lib/ui.js?v=500adc2';
+import { downloadJson } from '../lib/download.js?v=500adc2';
+import { demoEntries } from '../lib/demo-data.js?v=500adc2';
 
 const APP_KEY = 'timeline.app.v1';
 

@@ -125,7 +125,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .axis-viewport{background:transparent}
 
 .zoom{display:flex;gap:8px;align-items:center}
-.zoom-label{min-width:72px;text-align:center;color:var(--muted);font-size:12px;border:1px solid var(--border);padding:6px 10px;border-radius:999px}
+.zoom-label{min-width:110px;text-align:center;color:var(--muted);font-size:12px;border:1px solid var(--border);padding:6px 10px;border-radius:999px}
 
 .axis-empty{color:var(--muted);padding:14px;border:1px dashed rgba(255,255,255,.14);border-radius:14px;margin:14px}
 

@@ -5,7 +5,7 @@ const ZOOMS = [
   { id: 'year', label: 'Year', pxPerDay: 0.7, tick: 'month' },
   { id: 'month', label: 'Month', pxPerDay: 2.2, tick: 'month' },
   { id: 'near', label: 'Near', pxPerDay: 7.5, tick: 'day' },
-  { id: 'close', label: 'Close', pxPerDay: 18, tick: 'day' },
+  { id: 'close', label: 'Detail', pxPerDay: 18, tick: 'day' },
 ];
 
 export function viewTimeline({ root, store, setStore, navigate }) {
@@ -46,7 +46,7 @@ export function viewTimeline({ root, store, setStore, navigate }) {
         onclick: () => zoomBy(-1),
         'aria-label': 'Zoom out',
       }, '−'),
-      el('div', { class: 'zoom-label', 'aria-label': 'Zoom level' }, ZOOMS[zoomIndex].label),
+      el('div', { class: 'zoom-label', 'aria-label': 'Zoom level' }, `Zoom: ${ZOOMS[zoomIndex].label}`),
       el('button', {
         class: 'btn',
         type: 'button',

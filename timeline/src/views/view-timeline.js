@@ -1,4 +1,4 @@
-import { el, mount, formatDate } from '../lib/ui.js?v=e9231b3';
+import { el, mount, formatDate } from '../lib/ui.js?v=20260202-ux1';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -54,7 +54,7 @@ export function viewTimeline({ root, store, setStore, navigate }) {
         'aria-label': 'Zoom in',
       }, '+')
     ),
-    el('div', { class: 'axis-hint' }, 'Drag to pan • Scroll to zoom • Click a node to open')
+    el('div', { class: 'axis-hint' }, 'Drag to pan • Scroll to zoom • Click to open')
   );
 
   const axis = entriesAll.length

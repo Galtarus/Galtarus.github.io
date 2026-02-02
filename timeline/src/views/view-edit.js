@@ -1,4 +1,4 @@
-import { el, mount } from '../lib/ui.js';
+import { el, mount } from '../lib/ui.js?v=9bb71c6';
 
 export function viewEdit({ root, store, setStore, navigate, id }) {
   const isNew = id === 'new';

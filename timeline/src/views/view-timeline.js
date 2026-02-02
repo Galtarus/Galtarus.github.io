@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260202ux13';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260202ux14';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -67,6 +67,10 @@ export function viewTimeline({ root, store, setStore, navigate }) {
 
   const mobile = isMobile();
 
+  const markAxisInteracted = () => {
+    if (!store.didInteractAxis) setStore({ didInteractAxis: true });
+  };
+
   const axis = entriesAll.length
     ? (mobile
       ? verticalTimeline({
@@ -81,6 +85,8 @@ export function viewTimeline({ root, store, setStore, navigate }) {
           entries: entriesAll,
           selectedId: store.selectedId,
           zoom,
+          showHint: !store.didInteractAxis,
+          onInteract: markAxisInteracted,
           onSelect: (id) => {
             setStore({ selectedId: id });
             navigate(`/entry/${id}`);
@@ -104,6 +110,7 @@ export function viewTimeline({ root, store, setStore, navigate }) {
       setZoomIndex: (next, anchor) => {
         setStore({ zoomIndex: next, zoomAnchor: anchor });
       },
+      onInteract: markAxisInteracted,
     });
 
     // If we have an anchor, preserve position instead of teleporting to start/selected.
@@ -170,7 +177,7 @@ function verticalItem(entry, isCurrent, onSelect) {
   );
 }
 
-function axisTimeline({ entries, selectedId, zoom, onSelect }) {
+function axisTimeline({ entries, selectedId, zoom, onSelect, showHint = true, onInteract }) {
   const dates = entries
     .map((e) => parseISODate(e.date))
     .filter(Boolean);
@@ -217,9 +224,18 @@ function axisTimeline({ entries, selectedId, zoom, onSelect }) {
     ...entries.map((entry, idx) => axisNode(entry, idx, { min: minPadded, zoom, selectedId, onSelect, padL }))
   );
 
-  enablePan(viewport);
+  enablePan(viewport, { onInteract });
+
+  const hint = showHint
+    ? el('div', { class: 'axis-onboard', 'aria-hidden': 'true' },
+        'Drag to pan · ',
+        el('kbd', {}, 'Wheel'), ' to zoom · ',
+        el('kbd', {}, 'Shift'), '+', el('kbd', {}, 'Wheel'), ' to pan'
+      )
+    : null;
 
   viewport.append(track);
+  if (hint) viewport.append(hint);
   return viewport;
 }
 
@@ -392,7 +408,7 @@ function clampInt(v, min, max) {
   return Math.min(max, Math.max(min, Math.trunc(n)));
 }
 
-function enablePan(viewport) {
+function enablePan(viewport, { onInteract } = {}) {
   let down = false;
   let moved = false;
   let startX = 0;
@@ -400,6 +416,7 @@ function enablePan(viewport) {
 
   viewport.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
+    if (onInteract) onInteract();
     down = true;
     moved = false;
     startX = e.clientX;
@@ -431,8 +448,9 @@ function enablePan(viewport) {
   viewport.addEventListener('pointerleave', end);
 }
 
-function attachWheelZoom(viewport, { getZoomIndex, setZoomIndex }) {
+function attachWheelZoom(viewport, { getZoomIndex, setZoomIndex, onInteract } = {}) {
   viewport.addEventListener('wheel', (e) => {
+    if (onInteract) onInteract();
     // Default: wheel zooms. Hold Shift to wheel-pan horizontally.
     if (e.shiftKey) {
       viewport.scrollLeft += (e.deltaX || 0) + e.deltaY;

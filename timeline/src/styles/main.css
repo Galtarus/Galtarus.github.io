@@ -148,8 +148,39 @@ button,input,select,textarea{font:inherit;color:inherit}
   scrollbar-width: thin;
   touch-action: pan-x;
   cursor: grab;
+  position: relative;
 }
 .axis-viewport.is-panning{cursor: grabbing}
+
+.axis-onboard{
+  position:absolute;
+  right:14px;
+  bottom:14px;
+  z-index: 2;
+  pointer-events:none;
+
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.28);
+  backdrop-filter: blur(6px);
+
+  color: rgba(230,237,243,.78);
+  font-size: 12px;
+  line-height: 1;
+  text-shadow: 0 10px 22px rgba(0,0,0,.55);
+}
+.axis-onboard kbd{
+  font: 11px/1.1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  color: rgba(230,237,243,.80);
+  padding: 2px 7px;
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+}
 
 .axis-track{position:relative;height:100%}
 .axis-line{

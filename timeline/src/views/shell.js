@@ -1,5 +1,5 @@
-import { el, mount, clear } from '../lib/ui.js?v=20260202ux13';
-import { viewTimeline } from './view-timeline.js?v=20260202ux13';
+import { el, mount, clear } from '../lib/ui.js?v=20260202ux14';
+import { viewTimeline } from './view-timeline.js?v=20260202ux14';
 import { viewEntry } from './view-entry.js?v=20260202ux6';
 import { viewEdit } from './view-edit.js?v=20260202ux6';
 import { viewAbout } from './view-about.js?v=20260202ux6';

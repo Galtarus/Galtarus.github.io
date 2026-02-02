@@ -282,12 +282,19 @@ function enablePan(viewport) {
 
 function attachWheelZoom(viewport, { getZoomIndex, setZoomIndex }) {
   viewport.addEventListener('wheel', (e) => {
-    // Ctrl+wheel (or trackpad pinch) to zoom.
-    if (!e.ctrlKey) return;
+    // Default: wheel zooms (more "timeline"-like). Hold Shift to scroll horizontally instead.
+    if (e.shiftKey) {
+      // Horizontal pan using wheel.
+      viewport.scrollLeft += (e.deltaX || 0) + e.deltaY;
+      return;
+    }
+
+    // Zoom
     e.preventDefault();
 
     const cur = getZoomIndex();
     const dir = Math.sign(e.deltaY);
+    // Wheel down => zoom out, wheel up => zoom in.
     const next = clampInt(cur + (dir > 0 ? -1 : 1), 0, ZOOMS.length - 1);
     if (next === cur) return;
 

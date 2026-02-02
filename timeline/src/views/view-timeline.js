@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260202ux16';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260202ux17';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -213,6 +213,8 @@ function axisTimeline({ entries, selectedId, zoom, onSelect, showHint = true, on
     'data-axis-viewport': '1',
   });
 
+  const placed = computeAxisLayout(entries, { min: minPadded, zoom, padL });
+
   const track = el('div', {
     class: 'axis-track',
     style: `width:${trackW}px`,
@@ -221,7 +223,7 @@ function axisTimeline({ entries, selectedId, zoom, onSelect, showHint = true, on
   },
     el('div', { class: 'axis-line', 'aria-hidden': 'true' }),
     ...ticks.map((t) => axisTick(t)),
-    ...entries.map((entry, idx) => axisNode(entry, idx, { min: minPadded, zoom, selectedId, onSelect, padL }))
+    ...placed.map((p, idx) => axisNode(p.entry, idx, { x: p.x, side: p.side, lane: p.lane, selectedId, onSelect }))
   );
 
   enablePan(viewport, { onInteract });
@@ -246,13 +248,29 @@ function axisTick(tick) {
   );
 }
 
-function axisNode(entry, idx, { min, zoom, selectedId, onSelect, padL = 0 }) {
-  const d = parseISODate(entry.date) || min;
-  const x = padL + Math.round(daysBetween(min, d) * zoom.pxPerDay);
-  const isCurrent = entry.id === selectedId;
+function computeAxisLayout(entries, { min, zoom, padL }) {
+  const laneStepMinPx = zoom.pxPerDay < 1 ? 86 : zoom.pxPerDay < 3 ? 74 : 62;
+  const laneLastX = []; // last x used per lane
 
-  // Alternate up/down to reduce label collisions.
-  const side = (idx % 2 === 0) ? 'up' : 'down';
+  return entries.map((entry) => {
+    const d = parseISODate(entry.date) || min;
+    const x = padL + Math.round(daysBetween(min, d) * zoom.pxPerDay);
+
+    let lane = 0;
+    for (; lane < laneLastX.length; lane++) {
+      if (x - laneLastX[lane] >= laneStepMinPx) break;
+    }
+    laneLastX[lane] = x;
+
+    const side = (lane % 2 === 0) ? 'up' : 'down';
+    const laneWithinSide = Math.floor(lane / 2);
+
+    return { entry, x, side, lane: laneWithinSide };
+  });
+}
+
+function axisNode(entry, idx, { x, side, lane = 0, selectedId, onSelect }) {
+  const isCurrent = entry.id === selectedId;
 
   const title = entry.title || '(Untitled)';
 
@@ -265,7 +283,7 @@ function axisNode(entry, idx, { min, zoom, selectedId, onSelect, padL = 0 }) {
     class: `axis-node ${side} ${isCurrent ? 'is-current' : ''}`,
     role: 'listitem',
     tabindex: '0',
-    style: `left:${x}px`,
+    style: `left:${x}px; --lane:${lane}`,
     'aria-current': isCurrent ? 'true' : 'false',
     'data-axis-selected': isCurrent ? '1' : '0',
     onclick: (e) => {

@@ -228,10 +228,14 @@ button,input,select,textarea{font:inherit;color:inherit}
      making the timeline feel sparse and harder to scan. */
   --node-offset: clamp(18px, 3vh, 48px);
   --card-offset: calc(var(--node-offset) + clamp(22px, 4vh, 72px));
+
+  /* Lane stacking: when events are dense, we push nodes into multiple “lanes” above/below
+     the axis instead of letting them visually sit on top of each other. */
+  --lane-step: clamp(34px, 4.2vh, 54px);
 }
 
-.axis-node.up{transform: translate(-50%, -50%) translateY(calc(-1 * var(--node-offset)))}
-.axis-node.down{transform: translate(-50%, -50%) translateY(var(--node-offset))}
+.axis-node.up{transform: translate(-50%, -50%) translateY(calc(-1 * (var(--node-offset) + (var(--lane,0) * var(--lane-step)))))}
+.axis-node.down{transform: translate(-50%, -50%) translateY(calc(var(--node-offset) + (var(--lane,0) * var(--lane-step))))}
 
 .axis-stem{
   pointer-events:none;
@@ -242,8 +246,8 @@ button,input,select,textarea{font:inherit;color:inherit}
   transform: translateX(-50%);
   border-radius: 2px;
 }
-.axis-node.up .axis-stem{ top:50%; height: var(--node-offset); }
-.axis-node.down .axis-stem{ top:calc(50% - var(--node-offset)); height: var(--node-offset); }
+.axis-node.up .axis-stem{ top:50%; height: calc(var(--node-offset) + (var(--lane,0) * var(--lane-step))); }
+.axis-node.down .axis-stem{ top:calc(50% - (var(--node-offset) + (var(--lane,0) * var(--lane-step)))); height: calc(var(--node-offset) + (var(--lane,0) * var(--lane-step))); }
 
 .axis-node .axis-dot{
   pointer-events:none;
@@ -312,8 +316,8 @@ button,input,select,textarea{font:inherit;color:inherit}
   background:rgba(15,23,35,.90);
   box-shadow:var(--shadow);
 }
-.axis-node.up .axis-card{bottom: var(--card-offset)}
-.axis-node.down .axis-card{top: var(--card-offset)}
+.axis-node.up .axis-card{bottom: calc(var(--card-offset) + (var(--lane,0) * var(--lane-step)))}
+.axis-node.down .axis-card{top: calc(var(--card-offset) + (var(--lane,0) * var(--lane-step)))}
 
 .axis-card .date{color:rgba(230,237,243,.70);font-size:12px}
 .axis-card .title{margin-top:6px;font-size:15px;line-height:1.25}

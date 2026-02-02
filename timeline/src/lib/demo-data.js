@@ -5,31 +5,45 @@ function iso(d) {
 }
 
 export function demoEntries() {
-  const now = new Date();
-
   return [
     {
-      id: 'e-001',
-      date: iso(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 14)),
-      title: 'Kickoff: timeline prototype',
-      summary: 'A tiny static timeline SPA with hash routing and demo data.',
-      tags: ['meta', 'build'],
+      id: 'e-1994-birth',
+      date: '1994-02-02',
+      title: 'Birth',
+      summary: 'Origin point on the timeline (demo).',
+      tags: ['life'],
+      imageUrl: './assets/img/demo-birth.png',
+    },
+    {
+      id: 'e-2012-trip',
+      date: '2012-07-14',
+      title: 'Trip photo',
+      summary: 'Example of an image preview (PNG served from this project).',
+      tags: ['photo'],
+      imageUrl: './assets/img/demo-trip.png',
+    },
+    {
+      id: 'e-2016-video',
+      date: '2016-06-18',
+      title: 'Video memory',
+      summary: 'Example YouTube thumbnail + click-through to details.',
+      tags: ['video'],
       youtubeId: 'dQw4w9WgXcQ',
     },
     {
-      id: 'e-002',
-      date: iso(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7)),
-      title: 'Feature: browse + detail view',
-      summary: 'Browse events, open details, and embed YouTube with click-to-load.',
-      tags: ['ui', 'timeline'],
-      youtubeId: null,
+      id: 'e-2020-project',
+      date: '2020-10-01',
+      title: 'Project milestone',
+      summary: 'Screenshot-style PNG preview to test density and legibility.',
+      tags: ['work'],
+      imageUrl: './assets/img/demo-project.png',
     },
     {
-      id: 'e-003',
-      date: iso(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)),
-      title: 'Editor: add and edit entries',
-      summary: 'Local persistence via localStorage. (IndexedDB can be added later.)',
-      tags: ['editor', 'storage'],
+      id: 'e-2026-proto',
+      date: iso(new Date()),
+      title: 'Timeline prototype',
+      summary: 'Dense labels + media previews should stay readable on the axis.',
+      tags: ['meta'],
       youtubeId: null,
     },
   ];

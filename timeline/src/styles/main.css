@@ -191,8 +191,11 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* Spread nodes/cards farther from the axis to use vertical space better on large screens.
    Use clamp() so small screens don’t get pushed too far, but tall screens feel “filled”. */
 :root{
-  --node-offset: clamp(44px, 8vh, 92px);
-  --card-offset: calc(var(--node-offset) + clamp(44px, 10vh, 140px));
+  /* Keep nodes/cards closer to the axis by default.
+     The previous offsets created a lot of dead vertical space on wide desktop screens,
+     making the timeline feel sparse and harder to scan. */
+  --node-offset: clamp(28px, 4.5vh, 68px);
+  --card-offset: calc(var(--node-offset) + clamp(30px, 6vh, 110px));
 }
 
 .axis-node.up{transform: translate(-50%, -50%) translateY(calc(-1 * var(--node-offset)))}

@@ -321,6 +321,14 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 .media-thumb{margin-top:10px;width:100%;height:auto;border-radius:12px;display:block;border:1px solid rgba(255,255,255,.12)}
 
+/* Smaller previews for hover labels on the horizontal axis (keeps the axis scannable). */
+.axis-label .media-thumb.small{
+  margin-top: 8px;
+  width: min(220px, 70vw);
+  max-height: 120px;
+  object-fit: cover;
+}
+
 .axis-node:focus-visible .axis-dot{outline:2px solid rgba(125,211,252,.55);outline-offset:2px}
 .axis-node[aria-current="true"] .axis-card{outline:2px solid rgba(167,139,250,.35)}
 

@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260202ux14';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260202ux16';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -259,6 +259,8 @@ function axisNode(entry, idx, { min, zoom, selectedId, onSelect, padL = 0 }) {
   const subtitle = subtitleFromEntry(entry);
   const chip = mediaChip(entry);
 
+  const labelPreview = mediaPreview(entry, { size: 'small' });
+
   return el('article', {
     class: `axis-node ${side} ${isCurrent ? 'is-current' : ''}`,
     role: 'listitem',
@@ -286,7 +288,8 @@ function axisNode(entry, idx, { min, zoom, selectedId, onSelect, padL = 0 }) {
         chip
       ),
       el('div', { class: 'axis-label-title' }, title),
-      subtitle ? el('div', { class: 'axis-label-sub' }, subtitle) : null
+      subtitle ? el('div', { class: 'axis-label-sub' }, subtitle) : null,
+      labelPreview
     ),
     isCurrent
       ? el('div', { class: 'axis-card' },
@@ -315,13 +318,15 @@ function mediaChip(entry) {
   return el('span', { class: `media-chip ${hasYt ? 'yt' : 'img'}`, title: hasYt ? 'Has YouTube' : 'Has image', 'aria-label': hasYt ? 'Has YouTube' : 'Has image' }, label);
 }
 
-function mediaPreview(entry) {
+function mediaPreview(entry, { size } = {}) {
   const hasImg = !!entry.imageUrl;
   const hasYt = !!entry.youtubeId;
 
+  const sizeClass = size ? ` ${size}` : '';
+
   if (hasImg) {
     return el('img', {
-      class: 'media-thumb',
+      class: `media-thumb${sizeClass}`,
       src: entry.imageUrl,
       alt: entry.title ? `Image: ${entry.title}` : 'Entry image',
       loading: 'lazy',
@@ -332,7 +337,7 @@ function mediaPreview(entry) {
   if (hasYt) {
     const thumb = `https://i.ytimg.com/vi/${encodeURIComponent(entry.youtubeId)}/hqdefault.jpg`;
     return el('img', {
-      class: 'media-thumb yt',
+      class: `media-thumb yt${sizeClass}`,
       src: thumb,
       alt: entry.title ? `YouTube thumbnail: ${entry.title}` : 'YouTube thumbnail',
       loading: 'lazy',

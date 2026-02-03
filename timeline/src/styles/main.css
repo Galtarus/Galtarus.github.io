@@ -1,14 +1,16 @@
 :root{
-  --bg:#0b0f14;
-  --panel:#101826;
-  --card:#0f1723;
-  --text:#e6edf3;
-  --muted:#9fb0c0;
+  /* Visual refresh: less "neon", less pitch-black, more premium contrast */
+  --bg:#0e1117;
+  --bg2:#0b1220;
+  --panel:rgba(255,255,255,.04);
+  --card:rgba(255,255,255,.06);
+  --text:#e8eef6;
+  --muted:rgba(232,238,246,.68);
   --border:rgba(255,255,255,.10);
-  --accent:#7dd3fc;
+  --accent:#86b7ff;
   --accent2:#a78bfa;
   --danger:#fb7185;
-  --shadow:0 10px 30px rgba(0,0,0,.35);
+  --shadow:0 14px 50px rgba(0,0,0,.35);
 
   /* Layout heights (used for viewport math)
      Keep these compact: the timeline is the product, not the chrome. */
@@ -29,9 +31,10 @@
 html,body{height:100%}
 body{
   margin:0;
-  background: radial-gradient(1200px 600px at 30% -10%, rgba(125,211,252,.25), transparent 50%),
-              radial-gradient(900px 500px at 90% 20%, rgba(167,139,250,.20), transparent 55%),
-              var(--bg);
+  background:
+    radial-gradient(900px 600px at 18% 8%, rgba(134,183,255,.18), transparent 55%),
+    radial-gradient(900px 600px at 88% 18%, rgba(167,139,250,.14), transparent 58%),
+    linear-gradient(180deg, var(--bg), var(--bg2));
   color:var(--text);
   font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
@@ -45,9 +48,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 .shell{min-height:100%;display:flex;flex-direction:column}
 .header{
   position:sticky;top:0;z-index:10;
-  background:rgba(11,15,20,.72);
-  backdrop-filter: blur(10px);
-  border-bottom:1px solid var(--border);
+  background:rgba(15,18,26,.72);
+  backdrop-filter: blur(12px);
+  border-bottom:1px solid rgba(255,255,255,.08);
 }
 .header-inner{max-width:1200px;margin:0 auto;padding:4px 16px;display:flex;gap:12px;align-items:center;height:var(--header-h)}
 .brand{display:flex;align-items:center;gap:10px}
@@ -80,20 +83,20 @@ button,input,select,textarea{font:inherit;color:inherit}
   .bottom-nav a[aria-current="page"]{color:var(--text)}
 }
 
-.panel{background:rgba(16,24,38,.75);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+.panel{background:var(--panel);border:1px solid rgba(255,255,255,.10);border-radius:16px;box-shadow:var(--shadow)}
 .panel h2{margin:0;padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .panel-body{padding:14px}
 
 .btn{
-  border:1px solid var(--border);
-  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
   padding:6px 10px;
   border-radius:10px;
   cursor:pointer;
 }
-.btn:hover{background:rgba(255,255,255,.07)}
-.btn:focus-visible{outline:2px solid rgba(125,211,252,.45); outline-offset:2px}
-.btn.primary{border-color:rgba(125,211,252,.35);background:rgba(125,211,252,.12)}
+.btn:hover{background:rgba(255,255,255,.10)}
+.btn:focus-visible{outline:2px solid rgba(134,183,255,.42); outline-offset:2px}
+.btn.primary{border-color:rgba(134,183,255,.35);background:rgba(134,183,255,.14)}
 .btn.danger{border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.10)}
 
 .input{width:100%;border:1px solid var(--border);background:rgba(0,0,0,.18);padding:9px 10px;border-radius:10px}

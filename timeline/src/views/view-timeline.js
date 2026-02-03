@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux23';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux24';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -247,19 +247,30 @@ function verticalTimeline({ entries, selectedId, onSelect }) {
     .slice()
     .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
-  // UX: on mobile, scanning is mostly “by month”. Add clear month separators (sticky),
-  // so the timeline reads like a feed instead of a long list of similar cards.
-  let lastKey = '';
+  // UX: on mobile, scanning is mostly “by month”, but long timelines need an extra
+  // level of structure. Add sticky YEAR + MONTH separators so the feed stays legible.
+  let lastMonthKey = '';
+  let lastYear = '';
   const children = [];
 
   for (const e of sorted) {
     const d = parseISODate(e.date);
-    const key = d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : '';
+    const year = d ? String(d.getFullYear()) : '';
+    const monthKey = d ? `${year}-${String(d.getMonth() + 1).padStart(2, '0')}` : '';
 
-    if (key && key !== lastKey) {
-      lastKey = key;
-      const label = d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
-      children.push(el('div', { class: 'vt-month', role: 'separator', 'aria-label': label }, label));
+    if (year && year !== lastYear) {
+      lastYear = year;
+      children.push(el('div', { class: 'vt-year', role: 'separator', 'aria-label': `Year ${year}` }, year));
+      // Reset month key when year changes (forces a month header too).
+      lastMonthKey = '';
+    }
+
+    if (monthKey && monthKey !== lastMonthKey) {
+      lastMonthKey = monthKey;
+      // Month chip can be shorter now (year is shown above).
+      const label = d.toLocaleString(undefined, { month: 'long' });
+      const aria = d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+      children.push(el('div', { class: 'vt-month', role: 'separator', 'aria-label': aria }, label));
     }
 
     children.push(verticalItem(e, e.id === selectedId, onSelect));

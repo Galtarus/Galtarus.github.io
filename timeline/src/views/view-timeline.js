@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux28';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux29';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -561,12 +561,11 @@ function axisNode(placed, idx, { selectedId, hoveredId, onHover, onSelect }) {
   const subtitle = subtitleFromEntry(primary);
   const chip = mediaChip(primary);
 
-  const labelPreview = mediaPreview(primary, { size: 'small' });
-
   // UX: make media “readable at a glance” on the axis.
   // If an entry has an image/YouTube, turn its dot into a tiny thumbnail.
   const dotThumb = mediaThumbUrl(primary, { size: 'dot' });
   const dotStyle = dotThumb ? `--dot-img:url(\"${cssUrl(dotThumb)}\")` : '';
+  const dotMedia = primary.youtubeId ? 'yt' : primary.imageUrl ? 'img' : '';
 
   const isStack = kind === 'stack' && entries.length > 1;
   const stackCount = entries.length;
@@ -612,9 +611,15 @@ function axisNode(placed, idx, { selectedId, hoveredId, onHover, onSelect }) {
     },
   },
     el('div', { class: 'axis-stem', 'aria-hidden': 'true' }),
-    el('div', { class: `axis-dot${dotThumb ? ' has-media' : ''}`, style: dotStyle, 'aria-hidden': 'true' }),
+    el('div', {
+      class: `axis-dot${dotThumb ? ' has-media' : ''}`,
+      style: dotStyle,
+      'data-media': dotMedia || null,
+      'aria-hidden': 'true',
+    }),
     isStack ? el('div', { class: 'axis-stack-badge', 'aria-hidden': 'true' }, String(stackCount)) : null,
-    el('div', { class: 'axis-label' },
+    // Avoid duplicated information: the current entry already has a full card.
+    isCurrent ? null : el('div', { class: 'axis-label' },
       el('div', { class: 'axis-label-top' },
         el('div', { class: 'axis-label-date' }, formatDate(primary.date)),
         chip
@@ -627,8 +632,7 @@ function axisNode(placed, idx, { selectedId, hoveredId, onHover, onSelect }) {
               ? `+${stackCount - 1} more nearby`
               : `+${stackCount - 1} more on this day`
           )
-        : null,
-      labelPreview
+        : null
     ),
 
     // The full card is visible for the selected entry, but also appears on hover/focus

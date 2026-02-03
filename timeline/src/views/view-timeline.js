@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux21';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux22';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -29,8 +29,14 @@ export function viewTimeline({ root, store, setStore, navigate }) {
 
   function getLastCursorX(vp) {
     if (!vp) return null;
+
+    const at = Number(vp.dataset.lastCursorAt || 0);
+    // Ignore stale cursor positions (ex: user moved away to click header controls).
+    if (!Number.isFinite(at) || Date.now() - at > 2500) return null;
+
     const n = Number(vp.dataset.lastCursorX);
     if (!Number.isFinite(n)) return null;
+
     // clamp to viewport bounds
     return Math.max(0, Math.min(vp.clientWidth, n));
   }
@@ -64,9 +70,10 @@ export function viewTimeline({ root, store, setStore, navigate }) {
     // - Otherwise, zoom around the selected item (keeps it "pinned" in view).
     // - Fallback: center of the viewport.
     const lastCursorX = getLastCursorX(vp);
-    const useCursor = vp.matches(':hover') && lastCursorX != null;
 
-    let cursorX = useCursor ? lastCursorX : null;
+    // UX: even when clicking header +/- (cursor not over the axis),
+    // preserve the last “point of attention” if it was recent.
+    let cursorX = lastCursorX != null ? lastCursorX : null;
     let focusRatio = null;
 
     if (cursorX == null) {
@@ -152,10 +159,14 @@ export function viewTimeline({ root, store, setStore, navigate }) {
       viewport.addEventListener('pointermove', (e) => {
         const rect = viewport.getBoundingClientRect();
         const x = e.clientX - rect.left;
-        if (Number.isFinite(x)) viewport.dataset.lastCursorX = String(x);
+        if (Number.isFinite(x)) {
+          viewport.dataset.lastCursorX = String(x);
+          viewport.dataset.lastCursorAt = String(Date.now());
+        }
       });
       viewport.addEventListener('pointerleave', () => {
         delete viewport.dataset.lastCursorX;
+        delete viewport.dataset.lastCursorAt;
       });
     }
 

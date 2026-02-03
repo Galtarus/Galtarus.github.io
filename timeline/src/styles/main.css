@@ -393,16 +393,33 @@ button,input,select,textarea{font:inherit;color:inherit}
 .media-chip.img{border-color:rgba(167,139,250,.28); background:rgba(167,139,250,.10)}
 
 .axis-card{
-  position:absolute;left:50%;transform: translateX(-50%);
+  position:absolute;
+  left:50%;
+  transform: translateX(-50%) translateY(8px) scale(.985);
   width:280px;
   border:1px solid rgba(255,255,255,.14);
   border-radius:14px;
   padding:11px 12px;
   background:rgba(15,23,35,.90);
   box-shadow:var(--shadow);
+
+  /* Hidden by default: reveal on hover/focus/current for fast scanning without clutter. */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease;
 }
 .axis-node.up .axis-card{bottom: calc(var(--card-offset) + (var(--lane,0) * var(--lane-step)))}
 .axis-node.down .axis-card{top: calc(var(--card-offset) + (var(--lane,0) * var(--lane-step)))}
+
+.axis-node.is-current .axis-card,
+.axis-node.is-hover .axis-card,
+.axis-node:focus-visible .axis-card{
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+.axis-node.is-current .axis-card{z-index: 4}
+.axis-node.is-hover .axis-card{z-index: 3}
 
 .axis-card .date{color:rgba(230,237,243,.70);font-size:12px}
 .axis-card .title{margin-top:6px;font-size:15px;line-height:1.25}

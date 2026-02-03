@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux27';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux28';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -132,11 +132,13 @@ export function viewTimeline({ root, store, setStore, navigate }) {
       : axisTimeline({
           entries: entriesAll,
           selectedId: store.selectedId,
+          hoveredId: store.hoveredId || null,
           zoom,
           showHint: !store.didInteractAxis,
           onInteract: markAxisInteracted,
+          onHover: (id) => setStore({ hoveredId: id }),
           onSelect: (id) => {
-            setStore({ selectedId: id });
+            setStore({ selectedId: id, hoveredId: null });
             navigate(`/entry/${id}`);
           },
         })
@@ -313,7 +315,7 @@ function verticalItem(entry, isCurrent, onSelect) {
   );
 }
 
-function axisTimeline({ entries, selectedId, zoom, onSelect, showHint = true, onInteract }) {
+function axisTimeline({ entries, selectedId, hoveredId, zoom, onSelect, onHover, showHint = true, onInteract }) {
   const dates = entries
     .map((e) => parseISODate(e.date))
     .filter(Boolean);
@@ -359,7 +361,7 @@ function axisTimeline({ entries, selectedId, zoom, onSelect, showHint = true, on
   },
     el('div', { class: 'axis-line', 'aria-hidden': 'true' }),
     ...ticks.map((t) => axisTick(t)),
-    ...placed.map((p, idx) => axisNode(p, idx, { selectedId, onSelect }))
+    ...placed.map((p, idx) => axisNode(p, idx, { selectedId, hoveredId, onHover, onSelect }))
   );
 
   enablePan(viewport, { onInteract });
@@ -547,7 +549,7 @@ function computeAxisLayout(entries, { min, zoom, padL }) {
   });
 }
 
-function axisNode(placed, idx, { selectedId, onSelect }) {
+function axisNode(placed, idx, { selectedId, hoveredId, onHover, onSelect }) {
   const { kind, entries, x, side, lane = 0, range } = placed;
 
   const isCurrent = entries.some((e) => e.id === selectedId);
@@ -569,13 +571,20 @@ function axisNode(placed, idx, { selectedId, onSelect }) {
   const isStack = kind === 'stack' && entries.length > 1;
   const stackCount = entries.length;
 
+  // UX: allow scanning by hovering nodes (no click needed).
+  const isHover = !isCurrent && hoveredId === primary.id;
+
   return el('article', {
-    class: `axis-node ${side} ${isStack ? 'stack' : ''} ${isCurrent ? 'is-current' : ''}`,
+    class: `axis-node ${side} ${isStack ? 'stack' : ''} ${isCurrent ? 'is-current' : ''} ${isHover ? 'is-hover' : ''}`,
     role: 'listitem',
     tabindex: '0',
     style: `left:${x}px; --lane:${lane}`,
     'aria-current': isCurrent ? 'true' : 'false',
     'data-axis-selected': isCurrent ? '1' : '0',
+    onpointerenter: () => { if (onHover) onHover(primary.id); },
+    onpointerleave: () => { if (onHover && hoveredId === primary.id) onHover(null); },
+    onfocus: () => { if (onHover) onHover(primary.id); },
+    onblur: () => { if (onHover && hoveredId === primary.id) onHover(null); },
     onclick: (e) => {
       const viewport = e.currentTarget?.closest?.('[data-axis-viewport="1"]');
       if (viewport?.dataset?.dragging === '1') return;
@@ -621,21 +630,22 @@ function axisNode(placed, idx, { selectedId, onSelect }) {
         : null,
       labelPreview
     ),
-    isCurrent
-      ? el('div', { class: 'axis-card' },
-          el('div', { class: 'date' }, formatDate(primary.date)),
-          el('div', { class: 'title' }, title),
-          subtitle ? el('div', { class: 'sub' }, subtitle) : null,
-          isStack
-            ? el('div', { class: 'footer-note' },
-                kind === 'cluster'
-                  ? `Stack: ${stackCount} entries in ${formatDateRange(range)} (click the badge to pick)`
-                  : `Stack: ${stackCount} entries on ${formatDate(primary.date)} (click the badge to pick)`
-              )
-            : null,
-          mediaPreview(primary)
-        )
-      : null
+
+    // The full card is visible for the selected entry, but also appears on hover/focus
+    // so users can scan quickly without committing to a click.
+    el('div', { class: 'axis-card' },
+      el('div', { class: 'date' }, formatDate(primary.date)),
+      el('div', { class: 'title' }, title),
+      subtitle ? el('div', { class: 'sub' }, subtitle) : null,
+      isStack
+        ? el('div', { class: 'footer-note' },
+            kind === 'cluster'
+              ? `Stack: ${stackCount} entries in ${formatDateRange(range)} (click the badge to pick)`
+              : `Stack: ${stackCount} entries on ${formatDate(primary.date)} (click the badge to pick)`
+          )
+        : null,
+      mediaPreview(primary)
+    )
   );
 }
 

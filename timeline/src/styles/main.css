@@ -402,6 +402,33 @@ button,input,select,textarea{font:inherit;color:inherit}
     text-shadow: 0 10px 22px rgba(0,0,0,.55);
   }
 
+  /* Floating “Latest” button: gives users a quick escape hatch back to the newest entry. */
+  .vt-fab{
+    position: fixed;
+    right: 14px;
+    bottom: calc(var(--bottom-nav-h) + 14px);
+    z-index: 20;
+
+    border: 1px solid rgba(125,211,252,.30);
+    background: rgba(125,211,252,.12);
+    color: rgba(230,237,243,.98);
+
+    padding: 10px 12px;
+    border-radius: 999px;
+    box-shadow: 0 18px 45px rgba(0,0,0,.55);
+
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 140ms ease, transform 140ms ease;
+  }
+  .vt-fab.show{
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .vt-fab:focus-visible{outline:2px solid rgba(125,211,252,.55); outline-offset:2px}
+
   .vt-item{position:relative; display:grid; grid-template-columns: 1fr; gap:10px; padding: 10px 0}
   .vt-dot{
     position:absolute; left: 8px; top: 22px;

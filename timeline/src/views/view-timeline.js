@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux22';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux23';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -145,9 +145,51 @@ export function viewTimeline({ root, store, setStore, navigate }) {
 
   mount(root, axis);
 
+  function scrollMobileToSelected({ behavior = 'smooth', block = 'center' } = {}) {
+    const vp = root.querySelector('.vt-viewport');
+    if (!vp) return;
+    const cur = root.querySelector('[data-vt-current="1"]');
+    if (!cur) return;
+    cur.scrollIntoView({ behavior, block, inline: 'nearest' });
+  }
+
+  // Mobile: add a “Latest” floating button so users can recover context after scrolling.
+  if (mobile && entriesAll.length) {
+    const fab = el('button', {
+      class: 'vt-fab',
+      type: 'button',
+      onclick: () => scrollMobileToSelected({ behavior: 'smooth' }),
+      'aria-label': 'Jump to the latest entry',
+    }, 'Latest');
+    mount(root, fab);
+  }
+
   // After render: desktop gets wheel zoom + horizontal anchoring. Mobile is vertical scroll.
   queueMicrotask(() => {
-    if (isMobile()) return;
+    if (isMobile()) {
+      const vp = root.querySelector('.vt-viewport');
+      const fab = root.querySelector('.vt-fab');
+      if (!vp) return;
+
+      // Auto-center once (first impression: show the newest entry, not the top of the list).
+      if (!store.didCenterMobile) {
+        scrollMobileToSelected({ behavior: 'auto' });
+        setStore({ didCenterMobile: true });
+      }
+
+      // Reveal the “Latest” button once the user scrolls away (so it doesn't distract on load).
+      if (vp.dataset.vtFab !== '1') {
+        vp.dataset.vtFab = '1';
+        const update = () => {
+          if (!fab) return;
+          const show = vp.scrollTop > 180;
+          fab.classList.toggle('show', show);
+        };
+        vp.addEventListener('scroll', update, { passive: true });
+        update();
+      }
+      return;
+    }
 
     const viewport = root.querySelector('[data-axis-viewport="1"]');
     const selectedEl = root.querySelector('[data-axis-selected="1"]');
@@ -238,6 +280,7 @@ function verticalItem(entry, isCurrent, onSelect) {
     class: `vt-item ${isCurrent ? 'is-current' : ''}`,
     role: 'listitem',
     tabindex: '0',
+    dataset: isCurrent ? { vtCurrent: '1' } : null,
     onclick: () => onSelect(entry.id),
     onkeydown: (e) => {
       if (e.key === 'Enter' || e.key === ' ') {

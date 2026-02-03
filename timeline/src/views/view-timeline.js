@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260202ux17';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux18';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -27,6 +27,30 @@ export function viewTimeline({ root, store, setStore, navigate }) {
     return root.querySelector('[data-axis-viewport="1"]');
   }
 
+  function getLastCursorX(vp) {
+    if (!vp) return null;
+    const n = Number(vp.dataset.lastCursorX);
+    if (!Number.isFinite(n)) return null;
+    // clamp to viewport bounds
+    return Math.max(0, Math.min(vp.clientWidth, n));
+  }
+
+  function anchorFromSelected(vp) {
+    if (!vp) return null;
+    const selectedEl = root.querySelector('[data-axis-selected="1"]');
+    if (!selectedEl) return null;
+
+    const vpRect = vp.getBoundingClientRect();
+    const elRect = selectedEl.getBoundingClientRect();
+    const center = (elRect.left + elRect.right) / 2;
+    const cursorX = center - vpRect.left;
+    if (!Number.isFinite(cursorX)) return null;
+
+    const clampedX = Math.max(0, Math.min(vp.clientWidth, cursorX));
+    const focusRatio = (vp.scrollLeft + clampedX) / Math.max(1, vp.scrollWidth);
+    return { cursorX: clampedX, focusRatio };
+  }
+
   function zoomBy(delta) {
     const vp = getViewport();
     const next = clampInt(zoomIndex + delta, 0, ZOOMS.length - 1);
@@ -35,9 +59,26 @@ export function viewTimeline({ root, store, setStore, navigate }) {
       return;
     }
 
-    // Anchor on viewport center.
-    const cursorX = vp.clientWidth / 2;
-    const focusRatio = (vp.scrollLeft + cursorX) / Math.max(1, vp.scrollWidth);
+    // UX: zoom buttons should preserve context.
+    // - If the pointer is over the axis, zoom around the pointer.
+    // - Otherwise, zoom around the selected item (keeps it "pinned" in view).
+    // - Fallback: center of the viewport.
+    const lastCursorX = getLastCursorX(vp);
+    const useCursor = vp.matches(':hover') && lastCursorX != null;
+
+    let cursorX = useCursor ? lastCursorX : null;
+    let focusRatio = null;
+
+    if (cursorX == null) {
+      const selected = anchorFromSelected(vp);
+      if (selected) {
+        cursorX = selected.cursorX;
+        focusRatio = selected.focusRatio;
+      }
+    }
+
+    if (cursorX == null) cursorX = vp.clientWidth / 2;
+    if (focusRatio == null) focusRatio = (vp.scrollLeft + cursorX) / Math.max(1, vp.scrollWidth);
 
     setStore({ zoomIndex: next, zoomAnchor: { id: String(Date.now()), focusRatio, cursorX } });
   }
@@ -104,6 +145,19 @@ export function viewTimeline({ root, store, setStore, navigate }) {
     const viewport = root.querySelector('[data-axis-viewport="1"]');
     const selectedEl = root.querySelector('[data-axis-selected="1"]');
     if (!viewport) return;
+
+    // Track last pointer X so +/- zoom buttons can zoom around the cursor.
+    if (viewport.dataset.cursorTrack !== '1') {
+      viewport.dataset.cursorTrack = '1';
+      viewport.addEventListener('pointermove', (e) => {
+        const rect = viewport.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        if (Number.isFinite(x)) viewport.dataset.lastCursorX = String(x);
+      });
+      viewport.addEventListener('pointerleave', () => {
+        delete viewport.dataset.lastCursorX;
+      });
+    }
 
     attachWheelZoom(viewport, {
       getZoomIndex: () => clampInt(store.zoomIndex ?? 1, 0, ZOOMS.length - 1),

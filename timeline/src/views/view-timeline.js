@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux18';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux19';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -303,23 +303,67 @@ function axisTick(tick) {
 }
 
 function computeAxisLayout(entries, { min, zoom, padL }) {
-  const laneStepMinPx = zoom.pxPerDay < 1 ? 86 : zoom.pxPerDay < 3 ? 74 : 62;
-  const laneLastX = []; // last x used per lane
+  // Goal: keep nodes readable when dates are dense.
+  // We treat each node as an interval on the X axis and place it into the first lane
+  // (per side) that doesn't overlap the previous interval in that lane.
+  // This keeps hover labels + detail zoom from visually colliding.
 
-  return entries.map((entry) => {
+  const sorted = entries
+    .slice()
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  // lastRight[side][lane] = last occupied x2 in that lane.
+  const lastRight = { up: [], down: [] };
+
+  const gapPx = zoom.pxPerDay < 1 ? 120 : zoom.pxPerDay < 3 ? 96 : zoom.pxPerDay < 8 ? 78 : 66;
+
+  function estimateNodeWidthPx(entry) {
+    // Match CSS constraints: .axis-label max-width 260px, card 280px.
+    // We estimate width mainly to avoid overlaps when labels are visible.
+    const title = String(entry.title || '');
+    const sub = String(entry.summary || '').trim();
+    const hasMedia = !!entry.imageUrl || !!entry.youtubeId;
+
+    const base = 190;
+    const titleExtra = Math.min(90, Math.max(0, (title.length - 18) * 3));
+    const subExtra = sub ? 40 : 0;
+    const mediaExtra = hasMedia ? 60 : 0;
+
+    // Wider at high zoom (labels are always-on at zoom-detail).
+    const zoomExtra = zoom.id === 'close' ? 40 : 0;
+
+    return clampInt(base + titleExtra + subExtra + mediaExtra + zoomExtra, 180, 320);
+  }
+
+  return sorted.map((entry, i) => {
     const d = parseISODate(entry.date) || min;
     const x = padL + Math.round(daysBetween(min, d) * zoom.pxPerDay);
 
-    let lane = 0;
-    for (; lane < laneLastX.length; lane++) {
-      if (x - laneLastX[lane] >= laneStepMinPx) break;
+    const w = estimateNodeWidthPx(entry);
+    const x1 = x - w / 2;
+    const x2 = x + w / 2;
+
+    // Prefer alternating sides for rhythm, but switch if that side would collide.
+    const preferredSide = (i % 2 === 0) ? 'up' : 'down';
+    const otherSide = preferredSide === 'up' ? 'down' : 'up';
+
+    function placeOn(side) {
+      const lanes = lastRight[side];
+      let lane = 0;
+      for (; lane < lanes.length; lane++) {
+        if (x1 >= lanes[lane] + gapPx) break;
+      }
+      lanes[lane] = x2;
+      return { side, lane };
     }
-    laneLastX[lane] = x;
 
-    const side = (lane % 2 === 0) ? 'up' : 'down';
-    const laneWithinSide = Math.floor(lane / 2);
+    // Try preferred side first, fall back to the other side if it would collide in lane 0.
+    const prefLane0Right = lastRight[preferredSide][0];
+    const prefLane0Ok = prefLane0Right == null || x1 >= prefLane0Right + gapPx;
 
-    return { entry, x, side, lane: laneWithinSide };
+    const placed = prefLane0Ok ? placeOn(preferredSide) : placeOn(otherSide);
+
+    return { entry, x, side: placed.side, lane: placed.lane };
   });
 }
 

@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux25';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux26';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -359,7 +359,7 @@ function axisTimeline({ entries, selectedId, zoom, onSelect, showHint = true, on
   },
     el('div', { class: 'axis-line', 'aria-hidden': 'true' }),
     ...ticks.map((t) => axisTick(t)),
-    ...placed.map((p, idx) => axisNode(p.entry, idx, { x: p.x, side: p.side, lane: p.lane, selectedId, onSelect }))
+    ...placed.map((p, idx) => axisNode(p, idx, { selectedId, onSelect }))
   );
 
   enablePan(viewport, { onInteract });
@@ -389,39 +389,65 @@ function computeAxisLayout(entries, { min, zoom, padL }) {
   // We treat each node as an interval on the X axis and place it into the first lane
   // (per side) that doesn't overlap the previous interval in that lane.
   // This keeps hover labels + detail zoom from visually colliding.
+  //
+  // NEW: when multiple entries share the same date, collapse them into a single “stack” node.
+  // This keeps the axis scannable and avoids vertical lane explosions.
 
   const sorted = entries
     .slice()
     .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  /** @type {Array<{kind:'single'|'stack', dateKey:string, entries:any[]}>} */
+  const groups = [];
+
+  for (const e of sorted) {
+    const key = String(e.date || '');
+    const last = groups.at(-1);
+
+    // Only stack when date is a real YYYY-MM-DD-like string and we're not in maximum detail zoom.
+    const canStack = zoom.id !== 'close' && key && /\d{4}-\d{2}-\d{2}/.test(key);
+
+    if (canStack && last && last.dateKey === key) {
+      last.kind = 'stack';
+      last.entries.push(e);
+    } else {
+      groups.push({ kind: 'single', dateKey: key, entries: [e] });
+    }
+  }
 
   // lastRight[side][lane] = last occupied x2 in that lane.
   const lastRight = { up: [], down: [] };
 
   const gapPx = zoom.pxPerDay < 1 ? 120 : zoom.pxPerDay < 3 ? 96 : zoom.pxPerDay < 8 ? 78 : 66;
 
-  function estimateNodeWidthPx(entry) {
+  function estimateNodeWidthPx(group) {
     // Match CSS constraints: .axis-label max-width 260px, card 280px.
     // We estimate width mainly to avoid overlaps when labels are visible.
-    const title = String(entry.title || '');
-    const sub = String(entry.summary || '').trim();
-    const hasMedia = !!entry.imageUrl || !!entry.youtubeId;
+    const primary = group.entries[0];
+    const title = String(primary.title || '');
+    const sub = String(primary.summary || '').trim();
+    const hasMedia = !!primary.imageUrl || !!primary.youtubeId;
 
     const base = 190;
     const titleExtra = Math.min(90, Math.max(0, (title.length - 18) * 3));
     const subExtra = sub ? 40 : 0;
     const mediaExtra = hasMedia ? 60 : 0;
 
+    // Stacks need a bit more room (badge + “+N more” context).
+    const stackExtra = group.kind === 'stack' ? 46 : 0;
+
     // Wider at high zoom (labels are always-on at zoom-detail).
     const zoomExtra = zoom.id === 'close' ? 40 : 0;
 
-    return clampInt(base + titleExtra + subExtra + mediaExtra + zoomExtra, 180, 320);
+    return clampInt(base + titleExtra + subExtra + mediaExtra + stackExtra + zoomExtra, 190, 340);
   }
 
-  return sorted.map((entry, i) => {
-    const d = parseISODate(entry.date) || min;
+  return groups.map((g, i) => {
+    const primary = g.entries[0];
+    const d = parseISODate(primary.date) || min;
     const x = padL + Math.round(daysBetween(min, d) * zoom.pxPerDay);
 
-    const w = estimateNodeWidthPx(entry);
+    const w = estimateNodeWidthPx(g);
     const x1 = x - w / 2;
     const x2 = x + w / 2;
 
@@ -445,27 +471,40 @@ function computeAxisLayout(entries, { min, zoom, padL }) {
 
     const placed = prefLane0Ok ? placeOn(preferredSide) : placeOn(otherSide);
 
-    return { entry, x, side: placed.side, lane: placed.lane };
+    return {
+      kind: g.kind,
+      entries: g.entries,
+      x,
+      side: placed.side,
+      lane: placed.lane,
+    };
   });
 }
 
-function axisNode(entry, idx, { x, side, lane = 0, selectedId, onSelect }) {
-  const isCurrent = entry.id === selectedId;
+function axisNode(placed, idx, { selectedId, onSelect }) {
+  const { kind, entries, x, side, lane = 0 } = placed;
 
-  const title = entry.title || '(Untitled)';
+  const isCurrent = entries.some((e) => e.id === selectedId);
+  const currentEntry = isCurrent ? entries.find((e) => e.id === selectedId) : null;
+  const primary = currentEntry || entries[0];
 
-  const subtitle = subtitleFromEntry(entry);
-  const chip = mediaChip(entry);
+  const title = primary.title || '(Untitled)';
 
-  const labelPreview = mediaPreview(entry, { size: 'small' });
+  const subtitle = subtitleFromEntry(primary);
+  const chip = mediaChip(primary);
+
+  const labelPreview = mediaPreview(primary, { size: 'small' });
 
   // UX: make media “readable at a glance” on the axis.
   // If an entry has an image/YouTube, turn its dot into a tiny thumbnail.
-  const dotThumb = mediaThumbUrl(entry, { size: 'dot' });
+  const dotThumb = mediaThumbUrl(primary, { size: 'dot' });
   const dotStyle = dotThumb ? `--dot-img:url(\"${cssUrl(dotThumb)}\")` : '';
 
+  const isStack = kind === 'stack' && entries.length > 1;
+  const stackCount = entries.length;
+
   return el('article', {
-    class: `axis-node ${side} ${isCurrent ? 'is-current' : ''}`,
+    class: `axis-node ${side} ${isStack ? 'stack' : ''} ${isCurrent ? 'is-current' : ''}`,
     role: 'listitem',
     tabindex: '0',
     style: `left:${x}px; --lane:${lane}`,
@@ -474,35 +513,120 @@ function axisNode(entry, idx, { x, side, lane = 0, selectedId, onSelect }) {
     onclick: (e) => {
       const viewport = e.currentTarget?.closest?.('[data-axis-viewport="1"]');
       if (viewport?.dataset?.dragging === '1') return;
-      onSelect(entry.id);
+
+      if (!isStack) {
+        onSelect(primary.id);
+        return;
+      }
+
+      openAxisStackMenu({ anchorEl: e.currentTarget, entries, onPick: (id) => onSelect(id) });
     },
     onkeydown: (e) => {
+      if (e.key === 'Escape') {
+        closeAxisStackMenu();
+        return;
+      }
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        onSelect(entry.id);
+        if (!isStack) {
+          onSelect(primary.id);
+          return;
+        }
+        openAxisStackMenu({ anchorEl: e.currentTarget, entries, onPick: (id) => onSelect(id) });
       }
     },
   },
     el('div', { class: 'axis-stem', 'aria-hidden': 'true' }),
     el('div', { class: `axis-dot${dotThumb ? ' has-media' : ''}`, style: dotStyle, 'aria-hidden': 'true' }),
+    isStack ? el('div', { class: 'axis-stack-badge', 'aria-hidden': 'true' }, String(stackCount)) : null,
     el('div', { class: 'axis-label' },
       el('div', { class: 'axis-label-top' },
-        el('div', { class: 'axis-label-date' }, formatDate(entry.date)),
+        el('div', { class: 'axis-label-date' }, formatDate(primary.date)),
         chip
       ),
       el('div', { class: 'axis-label-title' }, title),
       subtitle ? el('div', { class: 'axis-label-sub' }, subtitle) : null,
+      isStack ? el('div', { class: 'axis-label-sub' }, `+${stackCount - 1} more on this day`) : null,
       labelPreview
     ),
     isCurrent
       ? el('div', { class: 'axis-card' },
-          el('div', { class: 'date' }, formatDate(entry.date)),
+          el('div', { class: 'date' }, formatDate(primary.date)),
           el('div', { class: 'title' }, title),
           subtitle ? el('div', { class: 'sub' }, subtitle) : null,
-          mediaPreview(entry)
+          isStack ? el('div', { class: 'footer-note' }, `Stack: ${stackCount} entries on ${formatDate(primary.date)} (click the badge to pick)`) : null,
+          mediaPreview(primary)
         )
       : null
   );
+}
+
+// Axis stacks: lightweight chooser menu (prevents same-day entries from becoming unreadable).
+let __axisStackMenu = null;
+let __axisStackMenuCleanup = null;
+
+function closeAxisStackMenu() {
+  if (__axisStackMenuCleanup) __axisStackMenuCleanup();
+  __axisStackMenuCleanup = null;
+
+  if (__axisStackMenu && __axisStackMenu.parentNode) {
+    __axisStackMenu.parentNode.removeChild(__axisStackMenu);
+  }
+  __axisStackMenu = null;
+}
+
+function openAxisStackMenu({ anchorEl, entries, onPick }) {
+  closeAxisStackMenu();
+
+  const menu = el('div', { class: 'axis-stack-menu', role: 'dialog', 'aria-label': 'Pick an entry' },
+    el('div', { class: 'axis-stack-menu-title' }, 'Multiple entries'),
+    el('div', { class: 'axis-stack-menu-sub' }, `${entries.length} items on ${formatDate(entries[0]?.date)}`),
+    el('div', { class: 'axis-stack-menu-list', role: 'list' },
+      ...entries.map((e) => {
+        const t = e.title || '(Untitled)';
+        return el('button', {
+          class: 'axis-stack-menu-item',
+          type: 'button',
+          role: 'listitem',
+          onclick: () => {
+            closeAxisStackMenu();
+            onPick(e.id);
+          },
+        }, t);
+      })
+    )
+  );
+
+  __axisStackMenu = menu;
+  document.body.appendChild(menu);
+
+  const r = anchorEl.getBoundingClientRect();
+  const x = Math.min(window.innerWidth - 12, Math.max(12, r.left + r.width / 2));
+  const y = Math.min(window.innerHeight - 12, Math.max(12, r.top + r.height / 2));
+
+  // Position near the node.
+  menu.style.left = `${x}px`;
+  menu.style.top = `${y}px`;
+
+  const onDocDown = (ev) => {
+    if (!menu.contains(ev.target)) closeAxisStackMenu();
+  };
+  const onKey = (ev) => {
+    if (ev.key === 'Escape') closeAxisStackMenu();
+  };
+
+  document.addEventListener('pointerdown', onDocDown);
+  document.addEventListener('keydown', onKey);
+
+  __axisStackMenuCleanup = () => {
+    document.removeEventListener('pointerdown', onDocDown);
+    document.removeEventListener('keydown', onKey);
+  };
+
+  // Focus the first item for keyboard flow.
+  queueMicrotask(() => {
+    menu.querySelector('button')?.focus?.();
+  });
 }
 
 // Detail UI intentionally moved to /entry/:id.

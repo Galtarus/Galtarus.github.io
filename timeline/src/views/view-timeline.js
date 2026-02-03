@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux26';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux27';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -384,6 +384,13 @@ function axisTick(tick) {
   );
 }
 
+function formatDateRange(range) {
+  if (!range?.start || !range?.end) return '';
+  const a = formatDate(range.start);
+  const b = formatDate(range.end);
+  return a === b ? a : `${a}–${b}`;
+}
+
 function computeAxisLayout(entries, { min, zoom, padL }) {
   // Goal: keep nodes readable when dates are dense.
   // We treat each node as an interval on the X axis and place it into the first lane
@@ -397,9 +404,10 @@ function computeAxisLayout(entries, { min, zoom, padL }) {
     .slice()
     .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
-  /** @type {Array<{kind:'single'|'stack', dateKey:string, entries:any[]}>} */
-  const groups = [];
+  /** @type {Array<{kind:'single'|'stack'|'cluster', dateKey:string, entries:any[], range?:{start:Date,end:Date}}>} */
+  let groups = [];
 
+  // Phase 1: exact same-day stacks (prevents unreadable piles at medium zoom).
   for (const e of sorted) {
     const key = String(e.date || '');
     const last = groups.at(-1);
@@ -413,6 +421,60 @@ function computeAxisLayout(entries, { min, zoom, padL }) {
     } else {
       groups.push({ kind: 'single', dateKey: key, entries: [e] });
     }
+  }
+
+  // Phase 2: density-aware clustering at far zoom.
+  // When px/day is tiny, multiple distinct days end up visually “on top of each other”.
+  // Cluster close-by nodes into a single stack so the axis stays scannable.
+  const shouldCluster = zoom.pxPerDay < 1.05;
+  if (shouldCluster) {
+    const clusterGapPx = 56;
+    /** @type {typeof groups} */
+    const clustered = [];
+
+    /** @type {null | {kind:'single'|'stack'|'cluster', dateKey:string, entries:any[], range:{start:Date,end:Date}}} */
+    let cur = null;
+    let lastX = -Infinity;
+
+    for (const g of groups) {
+      const primary = g.entries[0];
+      const d = parseISODate(primary.date);
+
+      // If date is invalid, don't try to cluster.
+      if (!d) {
+        clustered.push(g);
+        cur = null;
+        lastX = -Infinity;
+        continue;
+      }
+
+      const x = padL + Math.round(daysBetween(min, d) * zoom.pxPerDay);
+
+      if (!cur) {
+        cur = { kind: g.kind, dateKey: g.dateKey, entries: [...g.entries], range: { start: d, end: d } };
+        clustered.push(cur);
+        lastX = x;
+        continue;
+      }
+
+      const gap = x - lastX;
+      if (gap <= clusterGapPx) {
+        cur.entries.push(...g.entries);
+        cur.kind = cur.entries.length > 1 ? 'cluster' : cur.kind;
+        cur.range.end = d;
+      } else {
+        cur = { kind: g.kind, dateKey: g.dateKey, entries: [...g.entries], range: { start: d, end: d } };
+        clustered.push(cur);
+      }
+
+      lastX = x;
+    }
+
+    groups = clustered.map((c) => {
+      if (c.kind !== 'cluster') return c;
+      c.entries.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+      return c;
+    });
   }
 
   // lastRight[side][lane] = last occupied x2 in that lane.
@@ -444,7 +506,10 @@ function computeAxisLayout(entries, { min, zoom, padL }) {
 
   return groups.map((g, i) => {
     const primary = g.entries[0];
-    const d = parseISODate(primary.date) || min;
+    const rep = g.kind === 'cluster'
+      ? (g.entries[Math.floor(g.entries.length / 2)] || primary)
+      : primary;
+    const d = parseISODate(rep.date) || min;
     const x = padL + Math.round(daysBetween(min, d) * zoom.pxPerDay);
 
     const w = estimateNodeWidthPx(g);
@@ -477,12 +542,13 @@ function computeAxisLayout(entries, { min, zoom, padL }) {
       x,
       side: placed.side,
       lane: placed.lane,
+      range: g.kind === 'cluster' ? g.range : null,
     };
   });
 }
 
 function axisNode(placed, idx, { selectedId, onSelect }) {
-  const { kind, entries, x, side, lane = 0 } = placed;
+  const { kind, entries, x, side, lane = 0, range } = placed;
 
   const isCurrent = entries.some((e) => e.id === selectedId);
   const currentEntry = isCurrent ? entries.find((e) => e.id === selectedId) : null;
@@ -546,7 +612,13 @@ function axisNode(placed, idx, { selectedId, onSelect }) {
       ),
       el('div', { class: 'axis-label-title' }, title),
       subtitle ? el('div', { class: 'axis-label-sub' }, subtitle) : null,
-      isStack ? el('div', { class: 'axis-label-sub' }, `+${stackCount - 1} more on this day`) : null,
+      isStack
+        ? el('div', { class: 'axis-label-sub' },
+            kind === 'cluster'
+              ? `+${stackCount - 1} more nearby`
+              : `+${stackCount - 1} more on this day`
+          )
+        : null,
       labelPreview
     ),
     isCurrent
@@ -554,7 +626,13 @@ function axisNode(placed, idx, { selectedId, onSelect }) {
           el('div', { class: 'date' }, formatDate(primary.date)),
           el('div', { class: 'title' }, title),
           subtitle ? el('div', { class: 'sub' }, subtitle) : null,
-          isStack ? el('div', { class: 'footer-note' }, `Stack: ${stackCount} entries on ${formatDate(primary.date)} (click the badge to pick)`) : null,
+          isStack
+            ? el('div', { class: 'footer-note' },
+                kind === 'cluster'
+                  ? `Stack: ${stackCount} entries in ${formatDateRange(range)} (click the badge to pick)`
+                  : `Stack: ${stackCount} entries on ${formatDate(primary.date)} (click the badge to pick)`
+              )
+            : null,
           mediaPreview(primary)
         )
       : null

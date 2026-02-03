@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux20';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux21';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -190,13 +190,30 @@ function isMobile() {
 // (Search/filter UI intentionally removed for the "just the axis" phase.)
 
 function verticalTimeline({ entries, selectedId, onSelect }) {
-  const items = entries
+  const sorted = entries
     .slice()
-    .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
-    .map((e) => verticalItem(e, e.id === selectedId, onSelect));
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  // UX: on mobile, scanning is mostly “by month”. Add clear month separators (sticky),
+  // so the timeline reads like a feed instead of a long list of similar cards.
+  let lastKey = '';
+  const children = [];
+
+  for (const e of sorted) {
+    const d = parseISODate(e.date);
+    const key = d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : '';
+
+    if (key && key !== lastKey) {
+      lastKey = key;
+      const label = d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+      children.push(el('div', { class: 'vt-month', role: 'separator', 'aria-label': label }, label));
+    }
+
+    children.push(verticalItem(e, e.id === selectedId, onSelect));
+  }
 
   return el('div', { class: 'vt-viewport' },
-    el('div', { class: 'vt-track', role: 'list', 'aria-label': 'Timeline (vertical)' }, ...items)
+    el('div', { class: 'vt-track', role: 'list', 'aria-label': 'Timeline (vertical)' }, ...children)
   );
 }
 

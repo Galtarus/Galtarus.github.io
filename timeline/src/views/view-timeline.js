@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux19';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux20';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -377,6 +377,11 @@ function axisNode(entry, idx, { x, side, lane = 0, selectedId, onSelect }) {
 
   const labelPreview = mediaPreview(entry, { size: 'small' });
 
+  // UX: make media “readable at a glance” on the axis.
+  // If an entry has an image/YouTube, turn its dot into a tiny thumbnail.
+  const dotThumb = mediaThumbUrl(entry, { size: 'dot' });
+  const dotStyle = dotThumb ? `--dot-img:url(\"${cssUrl(dotThumb)}\")` : '';
+
   return el('article', {
     class: `axis-node ${side} ${isCurrent ? 'is-current' : ''}`,
     role: 'listitem',
@@ -397,7 +402,7 @@ function axisNode(entry, idx, { x, side, lane = 0, selectedId, onSelect }) {
     },
   },
     el('div', { class: 'axis-stem', 'aria-hidden': 'true' }),
-    el('div', { class: 'axis-dot', 'aria-hidden': 'true' }),
+    el('div', { class: `axis-dot${dotThumb ? ' has-media' : ''}`, style: dotStyle, 'aria-hidden': 'true' }),
     el('div', { class: 'axis-label' },
       el('div', { class: 'axis-label-top' },
         el('div', { class: 'axis-label-date' }, formatDate(entry.date)),
@@ -432,6 +437,21 @@ function mediaChip(entry) {
   if (!hasImg && !hasYt) return null;
   const label = hasYt ? 'YT' : 'IMG';
   return el('span', { class: `media-chip ${hasYt ? 'yt' : 'img'}`, title: hasYt ? 'Has YouTube' : 'Has image', 'aria-label': hasYt ? 'Has YouTube' : 'Has image' }, label);
+}
+
+function cssUrl(s) {
+  // Safe for use inside style="--x:url(\"...\")".
+  return String(s || '').replace(/\\/g, '\\\\').replace(/\"/g, '%22');
+}
+
+function mediaThumbUrl(entry, { size } = {}) {
+  if (entry?.imageUrl) return String(entry.imageUrl);
+  if (entry?.youtubeId) {
+    const id = encodeURIComponent(entry.youtubeId);
+    const file = size === 'dot' ? 'mqdefault.jpg' : 'hqdefault.jpg';
+    return `https://i.ytimg.com/vi/${id}/${file}`;
+  }
+  return null;
 }
 
 function mediaPreview(entry, { size } = {}) {

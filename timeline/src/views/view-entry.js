@@ -1,5 +1,5 @@
-import { el, mount, formatDate } from '../lib/ui.js?v=20260203ux19';
-import { ytEmbed } from './yt.js?v=20260203ux19';
+import { el, mount, formatDate } from '../lib/ui.js?v=20260203ux20';
+import { ytEmbed } from './yt.js?v=20260203ux20';
 
 export function viewEntry({ root, store, navigate, id }) {
   const entries = store.entries

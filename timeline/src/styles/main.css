@@ -251,12 +251,35 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 .axis-node .axis-dot{
   pointer-events:none;
-  position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:999px;
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:14px;
+  height:14px;
+  border-radius:999px;
   transform: translate(-50%, -50%);
-  background:rgba(125,211,252,.95);
+
+  /* Default: solid accent dot. If --dot-img is provided, this becomes a thumbnail. */
+  background: var(--dot-color, rgba(125,211,252,.95));
+  background-image: var(--dot-img);
+  background-size: cover;
+  background-position: center;
+
   box-shadow:0 0 0 5px rgba(125,211,252,.14), 0 14px 35px rgba(0,0,0,.5);
 }
-.axis-node.is-current .axis-dot{background:rgba(167,139,250,.95); box-shadow:0 0 0 6px rgba(167,139,250,.16), 0 18px 45px rgba(0,0,0,.6)}
+
+.axis-node .axis-dot.has-media{
+  width:26px;
+  height:26px;
+  border:1px solid rgba(255,255,255,.22);
+  /* Subtle base so transparent images don’t disappear. */
+  background-color: rgba(125,211,252,.18);
+}
+
+.axis-node.is-current .axis-dot{
+  --dot-color: rgba(167,139,250,.95);
+  box-shadow:0 0 0 6px rgba(167,139,250,.16), 0 18px 45px rgba(0,0,0,.6);
+}
 
 .axis-label{
   position:absolute;left:50%;

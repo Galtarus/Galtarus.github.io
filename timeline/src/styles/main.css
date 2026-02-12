@@ -76,7 +76,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   .main{grid-template-columns: 1fr}
   .right-panel{order: -1}
   .header-actions .hide-mobile{display:none}
-  .header-center{display:none}
+  .header-center{display:flex}
   .bottom-nav{position:sticky;bottom:0;z-index:10;background:rgba(11,15,20,.75);backdrop-filter: blur(10px);border-top:1px solid var(--border)}
   .bottom-nav-inner{max-width:1200px;margin:0 auto;display:flex}
   .bottom-nav a{flex:1;text-align:center;padding:12px 8px;text-decoration:none;color:var(--muted)}
@@ -138,6 +138,32 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* Header-embedded zoom controls (timeline view). */
 .header-zoom .btn{padding:4px 9px;border-radius:999px}
 .header-zoom .zoom-label{min-width:0;padding:4px 10px}
+
+/* Mobile segmented zoom: Year / Month / Detail (density control) */
+.segmented{
+  display:flex;
+  gap:2px;
+  padding:2px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.22);
+  backdrop-filter: blur(10px);
+}
+.seg-btn{
+  border:0;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor:pointer;
+  color: rgba(232,238,246,.70);
+  font-size: 12px;
+  line-height: 1;
+}
+.seg-btn.is-on{
+  background: rgba(134,183,255,.16);
+  color: rgba(232,238,246,.98);
+}
+.seg-btn:focus-visible{outline:2px solid rgba(134,183,255,.42); outline-offset:2px}
 
 .axis-empty{color:var(--muted);padding:14px;border:1px dashed rgba(255,255,255,.14);border-radius:14px;margin:14px}
 
@@ -561,6 +587,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   .vt-title{margin-top:6px;font-size:15px;line-height:1.25}
   .vt-sub{margin-top:6px;color:rgba(230,237,243,.82); font-size:13px}
   .vt-card .media-thumb{margin-top:10px}
+  .vt-card .media-thumb.small{max-height: 140px; object-fit: cover}
 }
 
 /* Detail */

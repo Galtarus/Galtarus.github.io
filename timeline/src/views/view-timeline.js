@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260212ux32';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260212ux33';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -90,30 +90,59 @@ export function viewTimeline({ root, store, setStore, navigate }) {
     setStore({ zoomIndex: next, zoomAnchor: { id: String(Date.now()), focusRatio, cursorX } });
   }
 
+  const mobile = isMobile();
+
+  const MOBILE_ZOOMS = [
+    { id: 'year', label: 'Year' },
+    { id: 'month', label: 'Month' },
+    { id: 'detail', label: 'Detail' },
+  ];
+
+  const mobileZoom = mobile
+    ? String(store.mobileZoom || 'month')
+    : null;
+
+  const mobileZoomOk = !mobile || MOBILE_ZOOMS.some((z) => z.id === mobileZoom);
+  const mobileZoomFinal = mobileZoomOk ? mobileZoom : 'month';
+  if (mobile && store.mobileZoom !== mobileZoomFinal) setStore({ mobileZoom: mobileZoomFinal });
+
   const headerCenter = document.querySelector('[data-header-center="1"]');
   if (headerCenter) {
     clear(headerCenter);
-    // Keep the interface in ONE place to improve clarity + reclaim vertical space.
-    mount(headerCenter,
-      el('div', { class: 'zoom header-zoom' },
-        el('button', {
-          class: 'btn',
-          type: 'button',
-          onclick: () => zoomBy(-1),
-          'aria-label': 'Zoom out',
-        }, '−'),
-        el('div', { class: 'zoom-label', 'aria-label': 'Zoom level' }, `Zoom: ${zoom.label}`),
-        el('button', {
-          class: 'btn',
-          type: 'button',
-          onclick: () => zoomBy(+1),
-          'aria-label': 'Zoom in',
-        }, '+')
-      )
-    );
-  }
 
-  const mobile = isMobile();
+    if (mobile) {
+      // Mobile: zoom is about density/clarity (Year/Month/Detail), not pixels-per-day.
+      mount(headerCenter,
+        el('div', { class: 'segmented', role: 'group', 'aria-label': 'Timeline zoom' },
+          ...MOBILE_ZOOMS.map((z) => el('button', {
+            type: 'button',
+            class: `seg-btn ${mobileZoomFinal === z.id ? 'is-on' : ''}`,
+            'aria-pressed': mobileZoomFinal === z.id ? 'true' : 'false',
+            onclick: () => setStore({ mobileZoom: z.id }),
+          }, z.label))
+        )
+      );
+    } else {
+      // Desktop: pixel-zoom for horizontal axis.
+      mount(headerCenter,
+        el('div', { class: 'zoom header-zoom' },
+          el('button', {
+            class: 'btn',
+            type: 'button',
+            onclick: () => zoomBy(-1),
+            'aria-label': 'Zoom out',
+          }, '−'),
+          el('div', { class: 'zoom-label', 'aria-label': 'Zoom level' }, `Zoom: ${zoom.label}`),
+          el('button', {
+            class: 'btn',
+            type: 'button',
+            onclick: () => zoomBy(+1),
+            'aria-label': 'Zoom in',
+          }, '+')
+        )
+      );
+    }
+  }
 
   const markAxisInteracted = () => {
     if (!store.didInteractAxis) setStore({ didInteractAxis: true });
@@ -124,6 +153,7 @@ export function viewTimeline({ root, store, setStore, navigate }) {
       ? verticalTimeline({
           entries: entriesAll,
           selectedId: store.selectedId,
+          mode: mobileZoomFinal,
           onSelect: (id) => {
             setStore({ selectedId: id });
             navigate(`/entry/${id}`);
@@ -295,7 +325,7 @@ function avoidAxisCardOverlap(root) {
 
 // (Search/filter UI intentionally removed for the "just the axis" phase.)
 
-function verticalTimeline({ entries, selectedId, onSelect }) {
+function verticalTimeline({ entries, selectedId, mode = 'month', onSelect }) {
   const sorted = entries
     .slice()
     .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
@@ -318,7 +348,7 @@ function verticalTimeline({ entries, selectedId, onSelect }) {
       lastMonthKey = '';
     }
 
-    if (monthKey && monthKey !== lastMonthKey) {
+    if (mode !== 'year' && monthKey && monthKey !== lastMonthKey) {
       lastMonthKey = monthKey;
       // Month chip can be shorter now (year is shown above).
       const label = d.toLocaleString(undefined, { month: 'long' });
@@ -326,7 +356,7 @@ function verticalTimeline({ entries, selectedId, onSelect }) {
       children.push(el('div', { class: 'vt-month', role: 'separator', 'aria-label': aria }, label));
     }
 
-    children.push(verticalItem(e, e.id === selectedId, onSelect));
+    children.push(verticalItem(e, e.id === selectedId, onSelect, { mode }));
   }
 
   return el('div', { class: 'vt-viewport' },
@@ -334,11 +364,14 @@ function verticalTimeline({ entries, selectedId, onSelect }) {
   );
 }
 
-function verticalItem(entry, isCurrent, onSelect) {
+function verticalItem(entry, isCurrent, onSelect, { mode = 'month' } = {}) {
   const title = entry.title || '(Untitled)';
-  const subtitle = subtitleFromEntry(entry);
+  const subtitle = mode === 'year' ? '' : subtitleFromEntry(entry);
   const chip = mediaChip(entry);
-  const preview = mediaPreview(entry);
+
+  const preview = mode === 'year'
+    ? null
+    : mediaPreview(entry, { size: mode === 'month' ? 'small' : null });
 
   return el('article', {
     class: `vt-item ${isCurrent ? 'is-current' : ''}`,

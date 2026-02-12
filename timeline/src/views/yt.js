@@ -1,4 +1,4 @@
-import { el } from '../lib/ui.js?v=20260212ux32';
+import { el } from '../lib/ui.js?v=20260212ux33';
 
 export function ytEmbed(youtubeId) {
   const shell = el('div', { class: 'embed-shell' });

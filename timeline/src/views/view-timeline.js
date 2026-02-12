@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260203ux29';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260212ux30';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -888,19 +888,42 @@ function enablePan(viewport, { onInteract } = {}) {
 }
 
 function attachWheelZoom(viewport, { getZoomIndex, setZoomIndex, onInteract } = {}) {
+  // Trackpads can emit many tiny wheel events (especially during pinch-zoom).
+  // Accumulate deltas and only change discrete zoom levels when a threshold is crossed.
+  let acc = 0;
+  let lastAt = 0;
+
   viewport.addEventListener('wheel', (e) => {
     if (onInteract) onInteract();
-    // Default: wheel zooms. Hold Shift to wheel-pan horizontally.
+
+    // Hold Shift to wheel-pan horizontally.
     if (e.shiftKey) {
+      e.preventDefault();
       viewport.scrollLeft += (e.deltaX || 0) + e.deltaY;
       return;
     }
 
+    // Prevent browser/page scroll & browser zoom (ctrl+wheel) while the axis is active.
     e.preventDefault();
+
+    const now = Date.now();
+    if (now - lastAt > 220) acc = 0;
+    lastAt = now;
+
+    // Slightly more sensitive for ctrlKey pinch events.
+    const threshold = e.ctrlKey ? 24 : 60;
+    acc += e.deltaY;
+
+    const steps = Math.trunc(Math.abs(acc) / threshold);
+    if (steps <= 0) return;
+
+    // Consume the delta we used.
+    acc -= Math.sign(acc) * steps * threshold;
 
     const cur = getZoomIndex();
     const dir = Math.sign(e.deltaY);
-    const next = clampInt(cur + (dir > 0 ? -1 : 1), 0, ZOOMS.length - 1);
+    const rawNext = cur + (dir > 0 ? -steps : steps);
+    const next = clampInt(rawNext, 0, ZOOMS.length - 1);
     if (next === cur) return;
 
     const rect = viewport.getBoundingClientRect();

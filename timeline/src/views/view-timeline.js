@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260212ux31';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260212ux32';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -155,12 +155,24 @@ export function viewTimeline({ root, store, setStore, navigate }) {
     cur.scrollIntoView({ behavior, block, inline: 'nearest' });
   }
 
+  function scrollMobileToLatest({ behavior = 'smooth', block = 'center' } = {}) {
+    const vp = root.querySelector('.vt-viewport');
+    if (!vp) return;
+
+    // Latest should always mean “newest entry”, even if the user has an older entry selected.
+    const items = root.querySelectorAll('.vt-item');
+    const last = items.length ? items[items.length - 1] : null;
+    if (!last) return;
+
+    last.scrollIntoView({ behavior, block, inline: 'nearest' });
+  }
+
   // Mobile: add a “Latest” floating button so users can recover context after scrolling.
   if (mobile && entriesAll.length) {
     const fab = el('button', {
       class: 'vt-fab',
       type: 'button',
-      onclick: () => scrollMobileToSelected({ behavior: 'smooth' }),
+      onclick: () => scrollMobileToLatest({ behavior: 'smooth' }),
       'aria-label': 'Jump to the latest entry',
     }, 'Latest');
     mount(root, fab);
@@ -175,7 +187,7 @@ export function viewTimeline({ root, store, setStore, navigate }) {
 
       // Auto-center once (first impression: show the newest entry, not the top of the list).
       if (!store.didCenterMobile) {
-        scrollMobileToSelected({ behavior: 'auto' });
+        scrollMobileToLatest({ behavior: 'auto' });
         setStore({ didCenterMobile: true });
       }
 

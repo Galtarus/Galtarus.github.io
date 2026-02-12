@@ -1,8 +1,8 @@
-import { el, mount, clear } from '../lib/ui.js?v=20260212ux31';
-import { viewTimeline } from './view-timeline.js?v=20260212ux31';
-import { viewEntry } from './view-entry.js?v=20260212ux31';
-import { viewEdit } from './view-edit.js?v=20260212ux31';
-import { viewAbout } from './view-about.js?v=20260212ux31';
+import { el, mount, clear } from '../lib/ui.js?v=20260212ux32';
+import { viewTimeline } from './view-timeline.js?v=20260212ux32';
+import { viewEntry } from './view-entry.js?v=20260212ux32';
+import { viewEdit } from './view-edit.js?v=20260212ux32';
+import { viewAbout } from './view-about.js?v=20260212ux32';
 
 export function renderShell({ root, store, setStore, route, navigate }) {
   clear(root);

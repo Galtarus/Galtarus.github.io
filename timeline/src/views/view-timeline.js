@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260212ux33';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260212ux34';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -215,6 +215,54 @@ export function viewTimeline({ root, store, setStore, navigate }) {
       const fab = root.querySelector('.vt-fab');
       if (!vp) return;
 
+      // Gesture correctness: keep native vertical scroll, but suppress accidental
+      // "tap" selection when the finger is actually scrolling.
+      if (vp.dataset.vtGestures !== '1') {
+        vp.dataset.vtGestures = '1';
+
+        let pid = null;
+        let sx = 0;
+        let sy = 0;
+        let wasDrag = false;
+
+        const clearFlag = (delay = 0) => {
+          window.setTimeout(() => {
+            if (document?.documentElement) delete document.documentElement.dataset.vtDragging;
+          }, delay);
+        };
+
+        vp.addEventListener('pointerdown', (e) => {
+          // Only track primary touch pointers.
+          if (e.pointerType !== 'touch') return;
+          pid = e.pointerId;
+          sx = e.clientX;
+          sy = e.clientY;
+          wasDrag = false;
+          clearFlag(0);
+        }, { passive: true });
+
+        vp.addEventListener('pointermove', (e) => {
+          if (pid == null || e.pointerId !== pid) return;
+          const dx = e.clientX - sx;
+          const dy = e.clientY - sy;
+          // Consider it a scroll gesture once movement is clearly vertical.
+          if (!wasDrag && Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx) * 0.8) {
+            wasDrag = true;
+            if (document?.documentElement) document.documentElement.dataset.vtDragging = '1';
+          }
+        }, { passive: true });
+
+        const end = () => {
+          if (pid == null) return;
+          pid = null;
+          // Keep the flag briefly so the synthetic click after a scroll is ignored.
+          clearFlag(wasDrag ? 250 : 0);
+        };
+
+        vp.addEventListener('pointerup', end, { passive: true });
+        vp.addEventListener('pointercancel', end, { passive: true });
+      }
+
       // Auto-center once (first impression: show the newest entry, not the top of the list).
       if (!store.didCenterMobile) {
         scrollMobileToLatest({ behavior: 'auto' });
@@ -378,7 +426,11 @@ function verticalItem(entry, isCurrent, onSelect, { mode = 'month' } = {}) {
     role: 'listitem',
     tabindex: '0',
     dataset: isCurrent ? { vtCurrent: '1' } : null,
-    onclick: () => onSelect(entry.id),
+    onclick: () => {
+      // Mobile UX: avoid accidental opens while the user is scrolling.
+      if (document?.documentElement?.dataset?.vtDragging === '1') return;
+      onSelect(entry.id);
+    },
     onkeydown: (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();

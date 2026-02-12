@@ -490,6 +490,8 @@ button,input,select,textarea{font:inherit;color:inherit}
     height: calc(100dvh - var(--header-h) - var(--toolbar-h) - var(--bottom-nav-h));
     overflow:auto;
     overscroll-behavior: contain;
+    /* Gesture correctness: make sure the browser keeps native vertical scroll. */
+    touch-action: pan-y;
     padding: 14px 14px 24px;
   }
   .vt-track{position:relative; padding-left: 18px}

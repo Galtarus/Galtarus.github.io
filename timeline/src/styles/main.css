@@ -574,7 +574,28 @@ button,input,select,textarea{font:inherit;color:inherit}
     background: rgba(125,211,252,.92);
     box-shadow: 0 0 0 5px rgba(125,211,252,.14), 0 10px 28px rgba(0,0,0,.5);
   }
-  .vt-item.is-current .vt-dot{background: rgba(167,139,250,.95); box-shadow: 0 0 0 6px rgba(167,139,250,.16), 0 14px 34px rgba(0,0,0,.55)}
+
+  /* At-a-glance media: tiny thumbnail dot (no hover required). */
+  .vt-dot.has-media{
+    width: 16px;
+    height: 16px;
+    background: rgba(255,255,255,.10);
+    background-image: var(--dot-img);
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(255,255,255,.16);
+    box-shadow: 0 0 0 4px rgba(125,211,252,.12), 0 12px 30px rgba(0,0,0,.55);
+  }
+  .vt-dot.has-media[data-media="yt"]{border-color: rgba(125,211,252,.30)}
+  .vt-dot.has-media[data-media="img"]{border-color: rgba(167,139,250,.28)}
+
+  .vt-item.is-current .vt-dot{
+    background: rgba(167,139,250,.95);
+    box-shadow: 0 0 0 6px rgba(167,139,250,.16), 0 14px 34px rgba(0,0,0,.55);
+  }
+  .vt-item.is-current .vt-dot.has-media{
+    box-shadow: 0 0 0 5px rgba(167,139,250,.14), 0 16px 36px rgba(0,0,0,.58);
+  }
 
   .vt-card{
     margin-left: 18px;

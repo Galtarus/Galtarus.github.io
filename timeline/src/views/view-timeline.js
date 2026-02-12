@@ -423,6 +423,12 @@ function verticalItem(entry, isCurrent, onSelect, { mode = 'month' } = {}) {
     ? mediaPreview(entry, { size: 'tiny' })
     : mediaPreview(entry, { size: mode === 'month' ? 'small' : null });
 
+  // Mobile UX: make media visible “at a glance” in the vertical feed too.
+  // If an entry has an image/YouTube, turn its dot into a tiny thumbnail.
+  const dotThumb = mediaThumbUrl(entry, { size: 'dot' });
+  const dotStyle = dotThumb ? `--dot-img:url(\"${cssUrl(dotThumb)}\")` : '';
+  const dotMedia = entry.youtubeId ? 'yt' : entry.imageUrl ? 'img' : '';
+
   return el('article', {
     class: `vt-item ${isCurrent ? 'is-current' : ''}`,
     role: 'listitem',
@@ -440,7 +446,12 @@ function verticalItem(entry, isCurrent, onSelect, { mode = 'month' } = {}) {
       }
     },
   },
-    el('div', { class: 'vt-dot', 'aria-hidden': 'true' }),
+    el('div', {
+      class: `vt-dot${dotThumb ? ' has-media' : ''}`,
+      style: dotStyle,
+      'data-media': dotMedia || null,
+      'aria-hidden': 'true',
+    }),
     el('div', { class: 'vt-card' },
       el('div', { class: 'vt-top' },
         el('div', { class: 'vt-date' }, formatDate(entry.date)),

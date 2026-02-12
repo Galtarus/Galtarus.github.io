@@ -410,7 +410,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .axis-card{
   position:absolute;
   left:50%;
-  transform: translateX(-50%) translateY(8px) scale(.985);
+  transform: translateX(-50%) translateY(calc(8px + var(--card-shift, 0px))) scale(.985);
   width:280px;
   border:1px solid rgba(255,255,255,.14);
   border-radius:14px;
@@ -431,7 +431,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .axis-node:focus-visible .axis-card{
   opacity: 1;
   pointer-events: auto;
-  transform: translateX(-50%) translateY(0) scale(1);
+  transform: translateX(-50%) translateY(calc(0px + var(--card-shift, 0px))) scale(1);
 }
 .axis-node.is-current .axis-card{z-index: 4}
 .axis-node.is-hover .axis-card{z-index: 3}

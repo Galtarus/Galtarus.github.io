@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260212ux30';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260212ux31';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -227,6 +227,8 @@ export function viewTimeline({ root, store, setStore, navigate }) {
       viewport.dataset.zoomApplied = store.zoomAnchor.id;
       const { focusRatio, cursorX } = store.zoomAnchor;
       viewport.scrollLeft = Math.max(0, focusRatio * viewport.scrollWidth - cursorX);
+      // UX: if hover + current cards overlap, nudge hover card away so both remain readable.
+      avoidAxisCardOverlap(root);
       return;
     }
 
@@ -235,11 +237,48 @@ export function viewTimeline({ root, store, setStore, navigate }) {
       selectedEl.scrollIntoView({ block: 'nearest', inline: 'center' });
       setStore({ didCenter: true });
     }
+
+    // UX: if hover + current cards overlap, nudge hover card away so both remain readable.
+    avoidAxisCardOverlap(root);
   });
 }
 
 function isMobile() {
   return window.matchMedia && window.matchMedia('(max-width: 879px)').matches;
+}
+
+function avoidAxisCardOverlap(root) {
+  if (!root || isMobile()) return;
+
+  const curNode = root.querySelector('.axis-node.is-current');
+  const hoverNode = root.querySelector('.axis-node.is-hover');
+
+  // Clear previous shift (keep it cheap: only ever shift the hover node).
+  if (hoverNode) hoverNode.style.removeProperty('--card-shift');
+
+  if (!curNode || !hoverNode || curNode === hoverNode) return;
+
+  const curCard = curNode.querySelector('.axis-card');
+  const hoverCard = hoverNode.querySelector('.axis-card');
+  if (!curCard || !hoverCard) return;
+
+  // Only shift when BOTH cards are visible.
+  const curOpacity = Number(getComputedStyle(curCard).opacity || 0);
+  const hovOpacity = Number(getComputedStyle(hoverCard).opacity || 0);
+  if (curOpacity < 0.9 || hovOpacity < 0.9) return;
+
+  const a = curCard.getBoundingClientRect();
+  const b = hoverCard.getBoundingClientRect();
+
+  const overlapX = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+  const overlapY = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+  if (overlapX < 8 || overlapY < 8) return;
+
+  const pad = 14;
+  const shiftMag = Math.min(220, overlapY + pad);
+  const isUp = hoverNode.classList.contains('up');
+  const shift = isUp ? -shiftMag : shiftMag;
+  hoverNode.style.setProperty('--card-shift', `${shift}px`);
 }
 
 // (Search/filter UI intentionally removed for the "just the axis" phase.)

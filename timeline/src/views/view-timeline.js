@@ -1,4 +1,4 @@
-import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260212ux34';
+import { el, mount, clear, formatDate } from '../lib/ui.js?v=20260213ux35';
 
 const ZOOMS = [
   { id: 'far', label: 'Far', pxPerDay: 0.2, tick: 'year' },
@@ -417,8 +417,10 @@ function verticalItem(entry, isCurrent, onSelect, { mode = 'month' } = {}) {
   const subtitle = mode === 'year' ? '' : subtitleFromEntry(entry);
   const chip = mediaChip(entry);
 
+  // Mobile UX: even in the dense "Year" mode, show a tiny preview when media exists.
+  // This keeps the feed scannable without relying on hover (which doesn't exist on mobile).
   const preview = mode === 'year'
-    ? null
+    ? mediaPreview(entry, { size: 'tiny' })
     : mediaPreview(entry, { size: mode === 'month' ? 'small' : null });
 
   return el('article', {

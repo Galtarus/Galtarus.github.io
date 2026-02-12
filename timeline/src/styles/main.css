@@ -590,6 +590,13 @@ button,input,select,textarea{font:inherit;color:inherit}
   .vt-sub{margin-top:6px;color:rgba(230,237,243,.82); font-size:13px}
   .vt-card .media-thumb{margin-top:10px}
   .vt-card .media-thumb.small{max-height: 140px; object-fit: cover}
+
+  /* Dense "Year" mode: keep a thumbnail visible, but small enough to preserve rhythm. */
+  .vt-card .media-thumb.tiny{
+    margin-top: 8px;
+    max-height: 72px;
+    object-fit: cover;
+  }
 }
 
 /* Detail */

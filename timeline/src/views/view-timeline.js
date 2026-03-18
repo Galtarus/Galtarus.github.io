@@ -272,12 +272,19 @@ export function viewTimeline({ root, store, setStore, navigate }) {
       // Reveal the “Latest” button once the user scrolls away (so it doesn't distract on load).
       if (vp.dataset.vtFab !== '1') {
         vp.dataset.vtFab = '1';
+
         const update = () => {
           if (!fab) return;
-          const show = vp.scrollTop > 180;
+          // Latest entry is at the bottom of the list.
+          // Show the button when we are meaningfully away from the bottom.
+          const distFromBottom = vp.scrollHeight - (vp.scrollTop + vp.clientHeight);
+          const show = distFromBottom > 120;
           fab.classList.toggle('show', show);
         };
+
         vp.addEventListener('scroll', update, { passive: true });
+        // Also re-evaluate when layout changes (orientation change, address bar collapse, etc.).
+        window.addEventListener('resize', update, { passive: true });
         update();
       }
       return;

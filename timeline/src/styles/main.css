@@ -607,6 +607,14 @@ button,input,select,textarea{font:inherit;color:inherit}
     box-shadow: var(--shadow);
   }
 
+  /* Clarity: make the currently selected entry unmistakable in the feed.
+     (Mobile has no “hover = focus” crutch; selection should read instantly.) */
+  .vt-item.is-current .vt-card{
+    border-color: rgba(167,139,250,.28);
+    background: linear-gradient(180deg, rgba(167,139,250,.10), rgba(15,23,35,.86));
+    box-shadow: 0 0 0 1px rgba(167,139,250,.10), var(--shadow);
+  }
+
   /* Vertical clarity: visually connect the dot/rail to the card.
      (Mobile has no hover affordance; the structure must read instantly.) */
   .vt-card::before{
